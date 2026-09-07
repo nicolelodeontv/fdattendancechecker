@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 function base64url(value) {
   return Buffer.from(value).toString('base64url');
 }
@@ -24,7 +28,9 @@ export async function GET(req) {
     const state = url.searchParams.get('state');
     const expectedState = req.cookies.get('discord_oauth_state')?.value;
     if (!code || !state || !expectedState || state !== expectedState) {
-      return NextResponse.redirect(new URL('/?discord_error=invalid_state', url.origin));
+      const response = NextResponse.redirect(new URL('/?discord_error=invalid_state', url.origin));
+      response.headers.set('Cache-Control', 'no-store, private, max-age=0');
+      return response;
     }
 
     const clientId = process.env.DISCORD_CLIENT_ID;
@@ -76,6 +82,7 @@ export async function GET(req) {
     });
 
     const response = NextResponse.redirect(new URL('/', url.origin));
+    response.headers.set('Cache-Control', 'no-store, private, max-age=0');
     response.cookies.set('discord_session', session, {
       httpOnly: true,
       secure: true,
@@ -86,6 +93,8 @@ export async function GET(req) {
     response.cookies.delete('discord_oauth_state');
     return response;
   } catch (error) {
-    return NextResponse.redirect(new URL(`/?discord_error=${encodeURIComponent(error.message || 'Discord login failed.')}`, url.origin));
+    const response = NextResponse.redirect(new URL(`/?discord_error=${encodeURIComponent(error.message || 'Discord login failed.')}`, url.origin));
+    response.headers.set('Cache-Control', 'no-store, private, max-age=0');
+    return response;
   }
 }
