@@ -14,8 +14,8 @@ function formatCountdown(ms) {
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
   return d > 0
-    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-    : `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '0')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '0')}`
+    : `${String(h).padStart(2, '0')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '0')}`;
 }
 
 function useManilaClock() {
@@ -73,6 +73,7 @@ export default function Home() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState('');
+  const [submitPopup, setSubmitPopup] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -147,6 +148,7 @@ export default function Home() {
       if (!res.ok) throw new Error(data.error || 'Submission failed.');
       localStorage.setItem('fd_attendance_entry', JSON.stringify(data.entry));
       setLockedEntry(data.entry); setDeadline(data.deadline); setMessage('Response submitted and locked.');
+      setSubmitPopup({ ign: data.entry?.ign || form.ign.trim() });
     } catch (error) { setMessage(error.message); }
   }
 
@@ -259,7 +261,7 @@ export default function Home() {
             {adminOpen && !adminAuthed && <form className="admin-login" onSubmit={adminLogin}><div className="password-field"><input type={showAdminPassword ? 'text' : 'password'} value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="Admin password" /><button className="password-toggle" type="button" aria-label={showAdminPassword ? 'Hide password' : 'Show password'} onClick={() => setShowAdminPassword((value) => !value)}>{showAdminPassword ? '◉' : '◌'}</button></div><button className="small-btn" type="submit">UNLOCK</button></form>}
             {adminError && adminOpen && <div className="notice danger">{adminError}</div>}
             {deleteMessage && <div className="notice good">{deleteMessage}</div>}
-            {adminOpen && adminAuthed && <div style={{ marginTop: 10 }}><AdminResponseForm deadline={deadline} adminPassword={adminPassword} onCreated={(entry, nextDeadline) => { setEntries((old) => [...old, entry]); if (nextDeadline) setDeadline(nextDeadline); }} onResetLocked={() => { loadAdminEntries().catch((error) => setMessage(error.message)); }} /><div className="notice good" style={{ marginTop: 10 }}>Admin-created responses remain <b>UNLOCKED</b>. Respondent submissions remain <b>🔒 LOCKED</b>.</div>{entries.length === 0 ? <div className="notice" style={{ marginTop: 10 }}>No submitted responses yet. Use the admin response form above to add one.</div> : entries.map((entry) => <AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry} />)}</div>}
+            {adminOpen && adminAuthed && <div style={{ marginTop: 10 }}><AdminResponseForm deadline={deadline} adminPassword={adminPassword} onCreated={(entry, nextDeadline) => { setEntries((old) => [...old, entry]); if (nextDeadline) setDeadline(nextDeadline); }} onResetLocked={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))} /><div className="notice good" style={{ marginTop: 10 }}>Admin-created responses remain <b>UNLOCKED</b>. Respondent submissions remain <b>🔒 LOCKED</b>.</div>{entries.length === 0 ? <div className="notice" style={{ marginTop: 10 }}>No submitted responses yet. Use the admin response form above to add one.</div> : entries.map((entry) => <AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry} />)}</div>}
           </section>
         </main>
 
@@ -267,6 +269,8 @@ export default function Home() {
       </div>
 
       {deleteTarget && <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) cancelDelete(); }}><div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title"><div className="eyebrow">ADMIN ACTION</div><h2 id="delete-modal-title">DELETE RESPONSE?</h2><p>Are you sure you want to delete <b>{deleteTarget.ign || 'this response'}</b>? This action cannot be undone.</p>{deleteMessage && <div className="notice danger">{deleteMessage}</div>}<div className="confirm-actions"><button className="small-btn" type="button" disabled={deleteBusy} onClick={cancelDelete}>CANCEL</button><button className="small-btn danger-btn modal-delete-btn" type="button" disabled={deleteBusy} onClick={confirmDelete}>{deleteBusy ? 'DELETING…' : 'DELETE'}</button></div></div></div>}
+
+      {submitPopup && <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setSubmitPopup(null); }}><div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="submit-modal-title"><div className="eyebrow">RESPONSE SUBMITTED</div><h2 id="submit-modal-title">SUCCESS</h2><div className="notice good">✅ <b>{submitPopup.ign}</b> submitted successfully.</div><p>Your Final Day Attendance response has been recorded and is now <b>🔒 LOCKED</b> to your Discord account.</p><div className="confirm-actions"><button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button></div></div></div>}
     </div>
   );
 }
