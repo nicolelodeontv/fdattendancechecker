@@ -4,141 +4,20 @@ import { useEffect, useMemo, useState } from 'react';
 
 const EMPTY = { ign: '', attendance: '', pilot: '', pilotName: '', hours: '', notes: '' };
 const ICONS = { yes: '✅', no: '❌', hourglass: '⏳', lock: '🔒' };
+function formatCountdown(ms) { if (ms <= 0) return '00:00:00'; const total=Math.floor(ms/1000); const d=Math.floor(total/86400),h=Math.floor(total%86400/3600),m=Math.floor(total%3600/60),s=total%60; return d>0?`${String(d).padStart(2,'0')}:${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`; }
+function useManilaClock(){ const [now,setNow]=useState(Date.now()); useEffect(()=>{const id=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(id)},[]); return new Intl.DateTimeFormat('en-PH',{timeZone:'Asia/Manila',dateStyle:'medium',timeStyle:'medium'}).format(now); }
 
-function formatCountdown(ms) {
-  if (ms <= 0) return '00:00:00';
-  const total = Math.floor(ms / 1000);
-  const d = Math.floor(total / 86400);
-  const h = Math.floor((total % 86400) / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  return d > 0 ? `${String(d).padStart(2,'0')}:${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+export default function Home(){
+ const clock=useManilaClock(); const [form,setForm]=useState(EMPTY),[lockedEntry,setLockedEntry]=useState(null),[deadline,setDeadline]=useState(null),[entries,setEntries]=useState([]),[now,setNow]=useState(Date.now()),[message,setMessage]=useState(''),[loading,setLoading]=useState(true),[adminPassword,setAdminPassword]=useState(''),[adminOpen,setAdminOpen]=useState(false),[adminAuthed,setAdminAuthed]=useState(false),[adminError,setAdminError]=useState('');
+ const load=async()=>{setLoading(true);try{const res=await fetch('/api/attendance',{cache:'no-store'}),data=await res.json();if(!res.ok)throw new Error(data.error||'Unable to load tracker.');setDeadline(data.deadline);setEntries(data.entries||[]);const localId=localStorage.getItem('fd_attendance_entry_id'),mine=(data.entries||[]).find(x=>x.id===localId);setLockedEntry(mine||null);if(mine)setForm({ign:mine.ign,attendance:mine.attendance,pilot:mine.pilot,pilotName:mine.pilotName,hours:mine.hours,notes:mine.notes});}catch(e){setMessage(e.message)}finally{setLoading(false)}};
+ useEffect(()=>{load()},[]); useEffect(()=>{const id=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(id)},[]);
+ const remaining=useMemo(()=>deadline?Date.parse(deadline)-now:null,[deadline,now]),closed=remaining!==null&&remaining<=0; const update=(key,value)=>setForm(x=>({...x,[key]:value}));
+ async function submit(e){e.preventDefault();setMessage('');if(!form.ign.trim()||!form.attendance||!form.pilot||(form.pilot==='have_pilot'&&!form.pilotName.trim())){setMessage('Please complete the required fields.');return}try{const res=await fetch('/api/attendance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)}),data=await res.json();if(!res.ok)throw new Error(data.error||'Submission failed.');localStorage.setItem('fd_attendance_entry_id',data.entry.id);setLockedEntry(data.entry);setDeadline(data.deadline);setMessage('Response submitted and locked.');setEntries(old=>[...old,data.entry])}catch(e){setMessage(e.message)}}
+ async function adminLogin(e){e.preventDefault();setAdminError('');try{const res=await fetch('/api/attendance?admin=1',{headers:{'x-admin-password':adminPassword},cache:'no-store'}),data=await res.json();if(res.status===401)throw new Error('Incorrect admin password.');if(!res.ok)throw new Error(data.error||'Admin login failed.');setEntries(data.entries||[]);setDeadline(data.deadline);setAdminAuthed(true);sessionStorage.setItem('fd_admin',adminPassword)}catch(e){setAdminError(e.message)}}
+ useEffect(()=>{const pw=sessionStorage.getItem('fd_admin');if(pw){setAdminPassword(pw);setAdminAuthed(true)}},[]);
+ async function saveEntry(entry){const res=await fetch('/api/attendance',{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':adminPassword},body:JSON.stringify(entry)}),data=await res.json();if(!res.ok)throw new Error(data.error||'Could not save.');setEntries(old=>old.map(x=>x.id===entry.id?data.entry:x))}
+ async function deleteEntry(id){if(!confirm('Delete this response?'))return;const res=await fetch('/api/attendance',{method:'DELETE',headers:{'Content-Type':'application/json','x-admin-password':adminPassword},body:JSON.stringify({id})}),data=await res.json();if(!res.ok){setAdminError(data.error||'Could not delete.');return}setEntries(old=>old.filter(x=>x.id!==id))}
+ return <div className="site-wrapper"><div className="shell"><header className="site-header"><div className="header-banner"><h1>FD ATTENDANCE CHECK TRACKER</h1><span>FD / ATTENDANCE</span></div><div className="server-time-bar"><div className="server-left"><span className="live-dot"/><span className="server-label">Philippine Server Time</span><span className="server-value">{clock}</span></div><span className="server-zone">Asia/Manila · UTC+8</span></div></header><main className="content-card"><div className="card-heading"><div className="eyebrow">RESPONSE FORM</div><h2>Final Discord Attendance</h2><p>Complete your attendance, pilot, and availability details. Once submitted, your response is locked on this device.</p></div><div className="deadline"><div className="deadline-copy">{ICONS.hourglass} <b>Response deadline:</b> 48 hours from the start of this response period.</div><div className="deadline-time">{closed?'DEADLINE PASSED':formatCountdown(remaining??0)}</div></div>{!lockedEntry?<form className="form" onSubmit={submit}><div className="field"><label>IGN <span className="required">*</span></label><input value={form.ign} onChange={e=>update('ign',e.target.value)} placeholder="CHAOS Michol" disabled={closed||loading}/></div><div className="grid-2"><ChoiceGroup title="Attendance" name="attendance" value={form.attendance} disabled={closed} options={[["attending",ICONS.yes+' Attending'],["not_attending",ICONS.no+' Not Attending']]} onChange={v=>update('attendance',v)}/><ChoiceGroup title="Pilot" name="pilot" value={form.pilot} disabled={closed} options={[["have_pilot",ICONS.yes+' Have Pilot'],["no_pilot",ICONS.no+' No Pilot']]} onChange={v=>update('pilot',v)}/></div><div className="grid-2"><div className="field"><label>Pilot Name <span className="required">{form.pilot==='have_pilot'?'*':''}</span></label><input value={form.pilotName} onChange={e=>update('pilotName',e.target.value)} placeholder="Pilot IGN" disabled={closed||form.pilot!=='have_pilot'}/></div><div className="field"><label>Hours</label><input value={form.hours} onChange={e=>update('hours',e.target.value)} placeholder="e.g. 14" disabled={closed}/></div></div><div className="field"><label>Notes <span>(optional)</span></label><textarea value={form.notes} onChange={e=>update('notes',e.target.value)} placeholder="Anything we should know?" disabled={closed}/></div><div className="submit-row"><button className="submit" disabled={closed||loading}>SUBMIT RESPONSE</button></div>{message&&<div className={`notice ${message.includes('locked')?'good':'danger'}`}>{message}</div>}</form>:<div className="form"><div className="notice good"><span className="lock">{ICONS.lock}</span> Your response is locked after submission. You can no longer change it from this device.</div><div className="entry" style={{marginTop:10}}><div className="entry-top"><div className="entry-ign">{lockedEntry.ign}</div><span className="badge info">SUBMITTED {new Date(lockedEntry.submittedAt).toLocaleString('en-PH',{timeZone:'Asia/Manila'})}</span></div><div className="badge-row"><span className={`badge ${lockedEntry.attendance==='attending'?'good':'danger'}`}>{lockedEntry.attendance==='attending'?ICONS.yes:ICONS.no} {lockedEntry.attendance==='attending'?'ATTENDING':'NOT ATTENDING'}</span><span className="badge info">{lockedEntry.pilot==='have_pilot'?ICONS.yes:ICONS.no} {lockedEntry.pilot==='have_pilot'?`PILOT: ${lockedEntry.pilotName}`:'NO PILOT'}</span><span className="badge">HOURS: {lockedEntry.hours||'—'}</span></div>{lockedEntry.notes&&<div className="notice" style={{marginTop:9}}>{lockedEntry.notes}</div>}</div></div>}<section className="admin"><div className="admin-head"><h3>ADMIN CONTROLS</h3><button className="small-btn" type="button" onClick={()=>setAdminOpen(!adminOpen)}>{adminOpen?'HIDE':'OPEN'}</button></div>{adminOpen&&!adminAuthed&&<form className="admin-login" onSubmit={adminLogin}><input type="password" value={adminPassword} onChange={e=>setAdminPassword(e.target.value)} placeholder="Admin password"/><button className="small-btn" type="submit">UNLOCK</button></form>}{adminError&&adminOpen&&<div className="notice danger">{adminError}</div>}{adminOpen&&adminAuthed&&<div style={{marginTop:10}}><div className="notice good">Admin mode active. You can edit or delete every response.</div>{entries.length===0?<div className="notice">No responses yet.</div>:entries.map(entry=><AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry}/>)}</div>}</section></main><footer className="site-footer"><p>FD Attendance Checker · Philippine Time · Responses lock after submit</p></footer></div></div>;
 }
-
-function useManilaClock() {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
-  return new Intl.DateTimeFormat('en-PH', { timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'medium' }).format(now);
-}
-
-export default function Home() {
-  const clock = useManilaClock();
-  const [form, setForm] = useState(EMPTY);
-  const [lockedEntry, setLockedEntry] = useState(null);
-  const [deadline, setDeadline] = useState(null);
-  const [entries, setEntries] = useState([]);
-  const [now, setNow] = useState(Date.now());
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [adminPassword, setAdminPassword] = useState('');
-  const [adminOpen, setAdminOpen] = useState(false);
-  const [adminAuthed, setAdminAuthed] = useState(false);
-  const [adminError, setAdminError] = useState('');
-
-  const load = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/attendance', { cache: 'no-store' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Unable to load tracker.');
-      setDeadline(data.deadline);
-      setEntries(data.entries || []);
-      const localId = localStorage.getItem('fd_attendance_entry_id');
-      const mine = (data.entries || []).find((x) => x.id === localId);
-      setLockedEntry(mine || null);
-      if (mine) setForm({ ign: mine.ign, attendance: mine.attendance, pilot: mine.pilot, pilotName: mine.pilotName, hours: mine.hours, notes: mine.notes });
-    } catch (e) { setMessage(e.message); } finally { setLoading(false); }
-  };
-
-  useEffect(() => { load(); }, []);
-  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
-
-  const remaining = useMemo(() => deadline ? Date.parse(deadline) - now : null, [deadline, now]);
-  const closed = remaining !== null && remaining <= 0;
-
-  const update = (key, value) => setForm((x) => ({ ...x, [key]: value }));
-
-  async function submit(e) {
-    e.preventDefault(); setMessage('');
-    if (!form.ign.trim() || !form.attendance || !form.pilot || (form.pilot === 'have_pilot' && !form.pilotName.trim())) {
-      setMessage('Please complete the required fields.'); return;
-    }
-    try {
-      const res = await fetch('/api/attendance', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Submission failed.');
-      localStorage.setItem('fd_attendance_entry_id', data.entry.id);
-      setLockedEntry(data.entry); setDeadline(data.deadline); setMessage('Response submitted and locked.');
-      setEntries((old) => [...old, data.entry]);
-    } catch (e) { setMessage(e.message); }
-  }
-
-  async function adminLogin(e) {
-    e.preventDefault(); setAdminError('');
-    try {
-      const res = await fetch('/api/attendance', { headers: { 'x-admin-password': adminPassword }, cache: 'no-store' });
-      const data = await res.json();
-      if (res.status === 401) throw new Error('Incorrect admin password.');
-      if (!res.ok) throw new Error(data.error || 'Admin login failed.');
-      setEntries(data.entries || []); setDeadline(data.deadline); setAdminAuthed(true); sessionStorage.setItem('fd_admin', adminPassword);
-    } catch (e) { setAdminError(e.message); }
-  }
-
-  useEffect(() => { const pw = sessionStorage.getItem('fd_admin'); if (pw) { setAdminPassword(pw); setAdminAuthed(true); } }, []);
-
-  async function saveEntry(entry) {
-    const res = await fetch('/api/attendance', { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword }, body: JSON.stringify(entry) });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Could not save.');
-    setEntries((old) => old.map((x) => x.id === entry.id ? data.entry : x));
-  }
-
-  async function deleteEntry(id) {
-    if (!confirm('Delete this response?')) return;
-    const res = await fetch('/api/attendance', { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword }, body: JSON.stringify({ id }) });
-    const data = await res.json();
-    if (!res.ok) { setAdminError(data.error || 'Could not delete.'); return; }
-    setEntries((old) => old.filter((x) => x.id !== id));
-  }
-
-  return <div className="site-wrapper">
-    <div className="shell">
-      <header className="site-header">
-        <div className="header-banner"><h1>FD ATTENDANCE CHECK TRACKER</h1><span>FD / ATTENDANCE</span></div>
-        <div className="server-time-bar"><div className="server-left"><span className="live-dot"/><span className="server-label">Philippine Server Time</span><span className="server-value">{clock}</span></div><span className="server-zone">Asia/Manila · UTC+8</span></div>
-      </header>
-
-      <main className="content-card">
-        <div className="card-heading"><div className="eyebrow">RESPONSE FORM</div><h2>Final Discord Attendance</h2><p>Complete your attendance, pilot, and availability details. Once submitted, your response is locked on your device.</p></div>
-        <div className="deadline"><div className="deadline-copy">{ICONS.hourglass} <b>Response deadline:</b> 48 hours from the start of this response period.</div><div className="deadline-time">{closed ? 'DEADLINE PASSED' : formatCountdown(remaining ?? 0)}</div></div>
-
-        {!lockedEntry ? <form className="form" onSubmit={submit}>
-          <div className="field"><label>IGN <span className="required">*</span></label><input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" disabled={closed || loading}/></div>
-          <div className="grid-2">
-            <div className="field"><label>Attendance <span className="required">*</span></label><div className="choices"><div className="choice"><input id="att-yes" type="radio" name="attendance" checked={form.attendance==='attending'} onChange={() => update('attendance','attending')} disabled={closed}/><label htmlFor="att-yes"><span className="icon">{ICONS.yes}</span> Attending</label></div><div className="choice"><input id="att-no" type="radio" name="attendance" checked={form.attendance==='not_attending'} onChange={() => update('attendance','not_attending')} disabled={closed}/><label htmlFor="att-no"><span className="icon">{ICONS.no}</span> Not Attending</label></div></div></div>
-            <div className="field"><label>Pilot <span className="required">*</span></label><div className="choices"><div className="choice"><input id="pilot-yes" type="radio" name="pilot" checked={form.pilot==='have_pilot'} onChange={() => update('pilot','have_pilot')} disabled={closed}/><label htmlFor="pilot-yes"><span className="icon">{ICONS.yes}</span> Have Pilot</label></div><div className="choice"><input id="pilot-no" type="radio" name="pilot" checked={form.pilot==='no_pilot'} onChange={() => update('pilot','no_pilot')} disabled={closed}/><label htmlFor="pilot-no"><span className="icon">{ICONS.no}</span> No Pilot</label></div></div></div>
-          </div>
-          <div className="grid-2"><div className="field"><label>Pilot Name</label><input value={form.pilotName} onChange={(e)=>update('pilotName',e.target.value)} placeholder="Pilot IGN" disabled={closed || form.pilot !== 'have_pilot'}/></div><div className="field"><label>Hours</label><input value={form.hours} onChange={(e)=>update('hours',e.target.value)} placeholder="e.g. 14" disabled={closed}/></div></div>
-          <div className="field"><label>Notes <span>(optional)</span></label><textarea value={form.notes} onChange={(e)=>update('notes',e.target.value)} placeholder="Anything we should know?" disabled={closed}/></div>
-          <div className="submit-row"><button className="submit" disabled={closed || loading}>SUBMIT RESPONSE</button></div>
-          {message && <div className={`notice ${message.includes('locked') ? 'good' : 'danger'}`}>{message}</div>}
-        </form> : <div className="form"><div className="notice good"><span className="lock">{ICONS.lock}</span> Your response is locked after submission. You can no longer change it from this device.</div><div className="entry" style={{marginTop:10}}><div className="entry-top"><div className="entry-ign">{lockedEntry.ign}</div><span className="badge info">SUBMITTED {new Date(lockedEntry.submittedAt).toLocaleString('en-PH',{timeZone:'Asia/Manila'})}</span></div><div className="badge-row"><span className={`badge ${lockedEntry.attendance==='attending'?'good':'danger'}`}>{lockedEntry.attendance==='attending'?ICONS.yes:ICONS.no} {lockedEntry.attendance==='attending'?'ATTENDING':'NOT ATTENDING'}</span><span className="badge info">{lockedEntry.pilot==='have_pilot'?ICONS.yes:ICONS.no} {lockedEntry.pilot==='have_pilot'?`PILOT: ${lockedEntry.pilotName}`:'NO PILOT'}</span><span className="badge">HOURS: {lockedEntry.hours || '—'}</span></div>{lockedEntry.notes && <div className="notice" style={{marginTop:9}}>{lockedEntry.notes}</div>}</div></div>}
-
-        <section className="admin">
-          <div className="admin-head"><h3>ADMIN CONTROLS</h3><button className="small-btn" type="button" onClick={()=>setAdminOpen(!adminOpen)}>{adminOpen?'HIDE':'OPEN'}</button></div>
-          {adminOpen && !adminAuthed && <form className="admin-login" onSubmit={adminLogin}><input type="password" value={adminPassword} onChange={(e)=>setAdminPassword(e.target.value)} placeholder="Admin password"/><button className="small-btn" type="submit">UNLOCK</button></form>}
-          {adminError && adminOpen && <div className="notice danger">{adminError}</div>}
-          {adminOpen && adminAuthed && <div style={{marginTop:10}}><div className="notice good">Admin mode active. You can edit or delete every response.</div>{entries.length===0?<div className="notice">No responses yet.</div>:entries.map((entry)=><AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry}/>)}</div>}
-        </section>
-      </main>
-      <footer className="site-footer"><p>FD Attendance Checker · Philippine Time · Responses lock after submit</p></footer>
-    </div>
-  </div>;
-}
-
-function AdminEntry({entry,onSave,onDelete}){
-  const [draft,setDraft]=useState(entry); const [saving,setSaving]=useState(false); const [status,setStatus]=useState('');
-  const patch=(k,v)=>setDraft(x=>({...x,[k]:v}));
-  const save=async()=>{setSaving(true);setStatus('');try{await onSave(draft);setStatus('Saved');}catch(e){setStatus(e.message)}finally{setSaving(false)}};
-  return <div className="entry"><div className="entry-top"><div className="entry-ign">{entry.ign}</div><div className="badge-row" style={{marginTop:0}}><span className="badge info">LOCKED</span></div></div><div className="entry-fields"><input value={draft.ign} onChange={e=>patch('ign',e.target.value)} placeholder="IGN"/><input value={draft.pilotName} onChange={e=>patch('pilotName',e.target.value)} placeholder="Pilot name"/><input value={draft.hours} onChange={e=>patch('hours',e.target.value)} placeholder="Hours"/><select value={draft.attendance} onChange={e=>patch('attendance',e.target.value)}><option value="attending">Attending</option><option value="not_attending">Not Attending</option></select><select value={draft.pilot} onChange={e=>patch('pilot',e.target.value)}><option value="have_pilot">Have Pilot</option><option value="no_pilot">No Pilot</option></select><span></span><textarea value={draft.notes} onChange={e=>patch('notes',e.target.value)} placeholder="Notes"/></div><div className="admin-actions"><button className="small-btn" type="button" disabled={saving} onClick={save}>{saving?'SAVING…':'SAVE'}</button><button className="small-btn danger-btn" type="button" onClick={()=>onDelete(entry.id)}>DELETE</button>{status&&<span className="badge info">{status}</span>}</div></div>;
-}
+function ChoiceGroup({title,name,value,disabled,options,onChange}){return <div className="field"><label>{title} <span className="required">*</span></label><div className="choices">{options.map(([v,text],i)=><div className="choice" key={v}><input id={`${name}-${i}`} type="radio" name={name} checked={value===v} onChange={()=>onChange(v)} disabled={disabled}/><label htmlFor={`${name}-${i}`}>{text}</label></div>)}</div></div>}
+function AdminEntry({entry,onSave,onDelete}){const[draft,setDraft]=useState(entry),[saving,setSaving]=useState(false),[status,setStatus]=useState('');const patch=(k,v)=>setDraft(x=>({...x,[k]:v}));const save=async()=>{setSaving(true);setStatus('');try{await onSave(draft);setStatus('Saved')}catch(e){setStatus(e.message)}finally{setSaving(false)}};return <div className="entry"><div className="entry-top"><div className="entry-ign">{entry.ign}</div><span className="badge info">LOCKED</span></div><div className="entry-fields"><input value={draft.ign} onChange={e=>patch('ign',e.target.value)} placeholder="IGN"/><input value={draft.pilotName} onChange={e=>patch('pilotName',e.target.value)} placeholder="Pilot name"/><input value={draft.hours} onChange={e=>patch('hours',e.target.value)} placeholder="Hours"/><select value={draft.attendance} onChange={e=>patch('attendance',e.target.value)}><option value="attending">Attending</option><option value="not_attending">Not Attending</option></select><select value={draft.pilot} onChange={e=>patch('pilot',e.target.value)}><option value="have_pilot">Have Pilot</option><option value="no_pilot">No Pilot</option></select><span></span><textarea value={draft.notes} onChange={e=>patch('notes',e.target.value)} placeholder="Notes"/></div><div className="admin-actions"><button className="small-btn" type="button" disabled={saving} onClick={save}>{saving?'SAVING…':'SAVE'}</button><button className="small-btn danger-btn" type="button" onClick={()=>onDelete(entry.id)}>DELETE</button>{status&&<span className="badge info">{status}</span>}</div></div>}
