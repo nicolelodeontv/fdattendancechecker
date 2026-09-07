@@ -14,7 +14,7 @@ function formatCountdown(ms) {
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
   return d > 0
-    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '0')}`
+    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '2')}`
     : `${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '2')}`;
 }
 
@@ -35,9 +35,11 @@ function escapeCsv(value) {
 }
 
 function exportCsv(entries) {
-  const headers = ['IGN', 'Attendance', 'Pilot', 'Pilot Name', 'Hours', 'Notes', 'Submitted At (PH)', 'Locked'];
+  const headers = ['IGN', 'Discord Account', 'Discord ID', 'Attendance', 'Pilot', 'Pilot Name', 'Hours', 'Notes', 'Submitted At (PH)', 'Locked'];
   const rows = entries.map((x) => [
     x.ign,
+    x.discordUsername || 'Admin-created',
+    x.discordId || '',
     x.attendance === 'attending' ? 'Attending' : 'Not Attending',
     x.pilot === 'have_pilot' ? 'Have Pilot' : 'No Pilot',
     x.pilotName, x.hours, x.notes,
@@ -307,7 +309,7 @@ function AdminEntry({ entry, onSave, onDelete }) {
   const handleSave = async () => { setSaving(true); try { await onSave(draft); } finally { setSaving(false); } };
   return (
     <div className="entry admin-entry">
-      <div className="entry-top"><div className="entry-ign">{entry.ign}</div><span className={`badge ${entry.locked ? 'danger' : 'good'}`}>{entry.locked ? 'LOCKED' : 'UNLOCKED'}</span></div>
+      <div className="entry-top"><div><div className="entry-ign">{entry.ign}</div><div className="admin-discord-account">DISCORD: <b>{entry.discordUsername || 'ADMIN CREATED'}</b>{entry.discordId && <span className="admin-discord-id"> · ID {entry.discordId}</span>}</div></div><span className={`badge ${entry.locked ? 'danger' : 'good'}`}>{entry.locked ? 'LOCKED' : 'UNLOCKED'}</span></div>
       <div className="entry-fields">
         <input value={draft.ign} onChange={(e) => update('ign', e.target.value)} placeholder="IGN" />
         <select value={draft.attendance} onChange={(e) => update('attendance', e.target.value)}><option value="attending">✅ ATTENDING</option><option value="not_attending">❌ NOT ATTENDING</option></select>
