@@ -57,25 +57,19 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
   async function submit(event) {
     event.preventDefault();
     setMessage('');
-
     if (!form.ign.trim() || !form.attendance || !form.pilot || (form.pilot === 'have_pilot' && !form.pilotName.trim())) {
       setMessage('Please complete the required fields.');
       return;
     }
-
     setSaving(true);
     try {
       const res = await fetch('/api/attendance?admin=1', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-password': adminPassword,
-        },
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
         body: JSON.stringify(form),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Submission failed.');
-
       const submittedIgn = data.entry?.ign || form.ign.trim();
       setForm(EMPTY);
       setMessage('Response submitted successfully. This admin-created response is not locked.');
@@ -105,34 +99,23 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
 
   async function confirmReset() {
     if (!resetPopup || resetting) return;
-
     const resetType = resetPopup.type;
     const target = resetPopup.target;
     setResetPopup(null);
     setResetting(true);
-
     try {
-      const body = resetType === 'one'
-        ? { action: 'reset_one', id: target.id }
-        : { action: 'reset_locked' };
-
+      const body = resetType === 'one' ? { action: 'reset_one', id: target.id } : { action: 'reset_locked' };
       const res = await fetch('/api/attendance?admin=1', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-password': adminPassword,
-        },
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
         body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not reset responses.');
-
       setSelectedResetId('');
-      if (resetType === 'one') {
-        setMessage(`${target.ign || 'Response'} has been reset. They can submit again.`);
-      } else {
-        setMessage(`Reset complete. ${data.removed || 0} locked response${data.removed === 1 ? '' : 's'} removed.`);
-      }
+      setMessage(resetType === 'one'
+        ? `${target.ign || 'Response'} has been reset. They can submit again.`
+        : `Reset complete. ${data.removed || 0} locked response${data.removed === 1 ? '' : 's'} removed.`);
       await loadLockedEntries();
       onResetLocked?.();
     } catch (error) {
@@ -153,9 +136,7 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
       </div>
 
       <div className="deadline">
-        <div className="deadline-copy">
-          {ICONS.hourglass} <b>Response deadline:</b> 48 hours from the start of this response period.
-        </div>
+        <div className="deadline-copy">{ICONS.hourglass} <b>Response deadline:</b> 48 hours from the start of this response period.</div>
         <div className="deadline-time">{closed ? 'DEADLINE PASSED' : formatCountdown(remaining)}</div>
       </div>
 
@@ -197,13 +178,9 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
               <option value="">SELECT LOCKED RESPONSE</option>
               {lockedEntries.map((entry) => <option key={entry.id} value={entry.id}>{entry.ign || 'Unnamed response'}</option>)}
             </select>
-            <button className="small-btn reset-locked-btn" type="button" onClick={requestResetSelected} disabled={saving || resetting || !selectedResetId}>
-              {resetting ? 'RESETTING…' : 'RESET SELECTED'}
-            </button>
+            <button className="small-btn reset-locked-btn" type="button" onClick={requestResetSelected} disabled={saving || resetting || !selectedResetId}>{resetting ? 'RESETTING…' : 'RESET SELECTED'}</button>
           </div>
-          <button className="small-btn reset-locked-btn reset-all-btn" type="button" onClick={requestResetAll} disabled={saving || resetting}>
-            {resetting ? 'RESETTING…' : 'RESET ALL LOCKED RESPONSES'}
-          </button>
+          <button className="small-btn reset-locked-btn reset-all-btn" type="button" onClick={requestResetAll} disabled={saving || resetting}>{resetting ? 'RESETTING…' : 'RESET ALL LOCKED RESPONSES'}</button>
         </div>
 
         {message && <div className={`notice ${message.includes('successfully') || message.includes('Reset complete') || message.includes('has been reset') ? 'good' : 'danger'}`}>{message}</div>}
