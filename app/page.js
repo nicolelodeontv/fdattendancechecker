@@ -14,8 +14,8 @@ function formatCountdown(ms) {
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
   return d > 0
-    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '0')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '0')}`
-    : `${String(h).padStart(2, '0')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '0')}`;
+    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '2')}`
+    : `${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '2')}`;
 }
 
 function useManilaClock() {
@@ -87,7 +87,6 @@ export default function Home() {
         setForm({ ign: data.entry.ign, attendance: data.entry.attendance, pilot: data.entry.pilot, pilotName: data.entry.pilotName, hours: data.entry.hours, notes: data.entry.notes });
         localStorage.setItem('fd_attendance_entry', JSON.stringify(data.entry));
       } else {
-        // The API is the source of truth. Do not resurrect a deleted/reset response from localStorage.
         localStorage.removeItem('fd_attendance_entry');
         setLockedEntry(null);
         setForm(EMPTY);
@@ -221,7 +220,6 @@ export default function Home() {
           {!adminMode && (
             <>
               <div className="card-heading"><div className="eyebrow">RESPONSE FORM</div><h2>Final Day Attendance</h2><p>Complete your attendance, pilot, and availability details. Your response is tied to your Discord account and locked after submission.</p></div>
-
               <div className="deadline"><div className="deadline-copy">{ICONS.hourglass} <b>Response deadline:</b> 48 hours from the start of this response period.</div><div className="deadline-time">{closed ? 'DEADLINE PASSED' : formatCountdown(remaining ?? 0)}</div></div>
 
               {!discordUser && !lockedEntry && (
@@ -239,12 +237,12 @@ export default function Home() {
               )}
 
               {discordUser && !lockedEntry ? (
-                <form className="form" onSubmit={submit}>
-                  <div className="field"><label>IGN <span className="required">*</span></label><input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" disabled={loading} /></div>
-                  <div className="grid-2"><ChoiceGroup title="Attendance" name="attendance" value={form.attendance} disabled={loading} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} /><ChoiceGroup title="Pilot" name="pilot" value={form.pilot} disabled={loading} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' No Pilot']]} onChange={(value) => update('pilot', value)} /></div>
-                  <div className="grid-2"><div className="field"><label>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label><input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" disabled={loading || form.pilot !== 'have_pilot'} /></div><div className="field"><label>Hours</label><input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" disabled={loading} /></div></div>
-                  <div className="field"><label>Notes <span>(optional)</span></label><textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" disabled={loading} /></div>
-                  <div className="submit-row"><button className="submit" type="submit" disabled={closed || loading}>SUBMIT RESPONSE</button></div>
+                <form className="form" onSubmit={submit} style={{ position: 'relative', zIndex: 50, pointerEvents: 'auto' }}>
+                  <div className="field" style={{ position: 'relative', zIndex: 55 }}><label style={{ pointerEvents: 'none' }}>IGN <span className="required">*</span></label><input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div>
+                  <div className="grid-2"><ChoiceGroup title="Attendance" name="attendance" value={form.attendance} disabled={false} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} /><ChoiceGroup title="Pilot" name="pilot" value={form.pilot} disabled={false} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' No Pilot']]} onChange={(value) => update('pilot', value)} /></div>
+                  <div className="grid-2"><div className="field" style={{ position: 'relative', zIndex: 55 }}><label style={{ pointerEvents: 'none' }}>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label><input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" disabled={form.pilot !== 'have_pilot'} style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div><div className="field" style={{ position: 'relative', zIndex: 55 }}><label style={{ pointerEvents: 'none' }}>Hours</label><input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div></div>
+                  <div className="field" style={{ position: 'relative', zIndex: 55 }}><label style={{ pointerEvents: 'none' }}>Notes <span>(optional)</span></label><textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div>
+                  <div className="submit-row"><button className="submit" type="submit" disabled={closed}>SUBMIT RESPONSE</button></div>
                   {message && <div className={`notice ${message.includes('locked') ? 'good' : 'danger'}`}>{message}</div>}
                 </form>
               ) : lockedEntry ? (
@@ -261,7 +259,7 @@ export default function Home() {
             {adminOpen && !adminAuthed && <form className="admin-login" onSubmit={adminLogin}><div className="password-field"><input type={showAdminPassword ? 'text' : 'password'} value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="Admin password" /><button className="password-toggle" type="button" aria-label={showAdminPassword ? 'Hide password' : 'Show password'} onClick={() => setShowAdminPassword((value) => !value)}>{showAdminPassword ? '◉' : '◌'}</button></div><button className="small-btn" type="submit">UNLOCK</button></form>}
             {adminError && adminOpen && <div className="notice danger">{adminError}</div>}
             {deleteMessage && <div className="notice good">{deleteMessage}</div>}
-            {adminOpen && adminAuthed && <div style={{ marginTop: 10 }}><AdminResponseForm deadline={deadline} adminPassword={adminPassword} onCreated={(entry, nextDeadline) => { setEntries((old) => [...old, entry]); if (nextDeadline) setDeadline(nextDeadline); }} onResetLocked={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))} /><div className="notice good" style={{ marginTop: 10 }}>Admin-created responses remain <b>UNLOCKED</b>. Respondent submissions remain <b>🔒 LOCKED</b>.</div>{entries.length === 0 ? <div className="notice" style={{ marginTop: 10 }}>No submitted responses yet. Use the admin response form above to add one.</div> : entries.map((entry) => <AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry} />)}</div>}
+            {adminOpen && adminAuthed && <div style={{ marginTop: 10, position: 'relative', zIndex: 20 }}><AdminResponseForm deadline={deadline} adminPassword={adminPassword} onCreated={(entry, nextDeadline) => { setEntries((old) => [...old, entry]); if (nextDeadline) setDeadline(nextDeadline); }} onResetLocked={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))} /><div className="notice good" style={{ marginTop: 10 }}>Admin-created responses remain <b>UNLOCKED</b>. Respondent submissions remain <b>🔒 LOCKED</b>.</div>{entries.length === 0 ? <div className="notice" style={{ marginTop: 10 }}>No submitted responses yet. Use the admin response form above to add one.</div> : entries.map((entry) => <AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry} />)}</div>}
           </section>
         </main>
 
@@ -269,14 +267,13 @@ export default function Home() {
       </div>
 
       {deleteTarget && <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) cancelDelete(); }}><div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title"><div className="eyebrow">ADMIN ACTION</div><h2 id="delete-modal-title">DELETE RESPONSE?</h2><p>Are you sure you want to delete <b>{deleteTarget.ign || 'this response'}</b>? This action cannot be undone.</p>{deleteMessage && <div className="notice danger">{deleteMessage}</div>}<div className="confirm-actions"><button className="small-btn" type="button" disabled={deleteBusy} onClick={cancelDelete}>CANCEL</button><button className="small-btn danger-btn modal-delete-btn" type="button" disabled={deleteBusy} onClick={confirmDelete}>{deleteBusy ? 'DELETING…' : 'DELETE'}</button></div></div></div>}
-
       {submitPopup && <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setSubmitPopup(null); }}><div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="submit-modal-title"><div className="eyebrow">RESPONSE SUBMITTED</div><h2 id="submit-modal-title">SUCCESS</h2><div className="notice good">✅ <b>{submitPopup.ign}</b> submitted successfully.</div><p>Your Final Day Attendance response has been recorded and is now <b>🔒 LOCKED</b> to your Discord account.</p><div className="confirm-actions"><button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button></div></div></div>}
     </div>
   );
 }
 
 function ChoiceGroup({ title, name, value, disabled, options, onChange }) {
-  return <div className="field"><label>{title} <span className="required">*</span></label><div className="choices">{options.map(([optionValue, text], index) => <div className="choice" key={optionValue}><input id={`${name}-${index}`} type="radio" name={name} checked={value === optionValue} onChange={() => onChange(optionValue)} disabled={disabled} /><label htmlFor={`${name}-${index}`}>{text}</label></div>)}</div></div>;
+  return <div className="field" style={{ position: 'relative', zIndex: 55 }}><label style={{ pointerEvents: 'none' }}>{title} <span className="required">*</span></label><div className="choices" style={{ position: 'relative', zIndex: 56 }}>{options.map(([valueOption, text], index) => <div className="choice" key={valueOption}><input id={`${name}-${index}`} type="radio" name={name} checked={value === valueOption} onChange={() => onChange(valueOption)} disabled={disabled} /><label htmlFor={`${name}-${index}`} style={{ pointerEvents: 'auto' }}>{text}</label></div>)}</div></div>;
 }
 
 function AdminEntry({ entry, onSave, onDelete }) {
