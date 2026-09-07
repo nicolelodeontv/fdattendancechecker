@@ -73,6 +73,9 @@ export default function Home() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminAuthed, setAdminAuthed] = useState(false);
   const [adminError, setAdminError] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -182,19 +185,39 @@ export default function Home() {
     setEntries((old) => old.map((x) => (x.id === entry.id ? data.entry : x)));
   }
 
-  async function deleteEntry(id) {
-    if (!confirm('Delete this response?')) return;
-    const res = await fetch('/api/attendance', {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
-      body: JSON.stringify({ id }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setAdminError(data.error || 'Could not delete.');
-      return;
+  function deleteEntry(id) {
+    const target = entries.find((entry) => entry.id === id);
+    if (!target) return;
+    setDeleteMessage('');
+    setDeleteTarget(target);
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget || deleteBusy) return;
+    setDeleteBusy(true);
+    setDeleteMessage('');
+    try {
+      const res = await fetch('/api/attendance', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+        body: JSON.stringify({ id: deleteTarget.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not delete.');
+      setEntries((old) => old.filter((x) => x.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      setDeleteMessage('Response deleted successfully.');
+    } catch (error) {
+      setDeleteMessage(error.message);
+    } finally {
+      setDeleteBusy(false);
     }
-    setEntries((old) => old.filter((x) => x.id !== id));
+  }
+
+  function cancelDelete() {
+    if (deleteBusy) return;
+    setDeleteTarget(null);
+    setDeleteMessage('');
   }
 
   function logoutAdmin() {
@@ -205,6 +228,8 @@ export default function Home() {
     setEntries([]);
     setAdminError('');
     setMessage('');
+    setDeleteTarget(null);
+    setDeleteMessage('');
   }
 
   const adminMode = adminOpen || adminAuthed;
@@ -321,6 +346,8 @@ export default function Home() {
 
             {adminError && adminOpen && <div className="notice danger">{adminError}</div>}
 
+            {deleteMessage && <div className="notice good">{deleteMessage}</div>}
+
             {adminOpen && adminAuthed && (
               <div style={{ marginTop: 10 }}>
                 <AdminResponseForm
@@ -350,6 +377,20 @@ export default function Home() {
           <p>FD Attendance Checker · Philippine Time · Responses lock after submit</p>
         </footer>
       </div>
+
+      {deleteTarget && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) cancelDelete(); }}>
+          <div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+            <div className="eyebrow">ADMIN ACTION</div>
+            <h2 id="delete-modal-title">DELETE RESPONSE?</h2>
+            <p>Are you sure you want to delete <b>{deleteTarget.ign || 'this response'}</b>? This action cannot be undone.</p>
+            <div className="confirm-actions">
+              <button className="small-btn" type="button" disabled={deleteBusy} onClick={cancelDelete}>CANCEL</button>
+              <button className="small-btn danger-btn modal-delete-btn" type="button" disabled={deleteBusy} onClick={confirmDelete}>{deleteBusy ? 'DELETING…' : 'DELETE'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
