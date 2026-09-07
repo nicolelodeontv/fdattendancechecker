@@ -73,6 +73,7 @@ export default function Home() {
   const [adminOpen, setAdminOpen] = useState(false);
   const [adminAuthed, setAdminAuthed] = useState(false);
   const [adminError, setAdminError] = useState('');
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState('');
@@ -239,7 +240,7 @@ export default function Home() {
       <div className="shell">
         <header className="site-header">
           <div className="header-banner">
-            <h1>FD ATTENDANCE CHECK TRACKER</h1>
+            <h1>CHAOS FD ATTENDANCE CHECKER</h1>
             <span>{adminMode ? 'ADMIN / CONTROL' : 'FD / ATTENDANCE'}</span>
           </div>
           <div className="server-time-bar">
@@ -257,7 +258,7 @@ export default function Home() {
             <>
               <div className="card-heading">
                 <div className="eyebrow">RESPONSE FORM</div>
-                <h2>Final Discord Attendance</h2>
+                <h2>Final Day Attendance</h2>
                 <p>Complete your attendance, pilot, and availability details. Once submitted, your response is locked on this device.</p>
               </div>
 
@@ -339,7 +340,7 @@ export default function Home() {
 
             {adminOpen && !adminAuthed && (
               <form className="admin-login" onSubmit={adminLogin}>
-                <input type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="Admin password" />
+                <div className="password-field"><input type={showAdminPassword ? "text" : "password"} value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="Admin password" /><button className="password-toggle" type="button" aria-label={showAdminPassword ? "Hide password" : "Show password"} onClick={() => setShowAdminPassword((value) => !value)}>{showAdminPassword ? "◉" : "◌"}</button></div>
                 <button className="small-btn" type="submit">UNLOCK</button>
               </form>
             )}
