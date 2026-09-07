@@ -17,7 +17,7 @@ function formatCountdown(ms) {
     : `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-export default function AdminResponseForm({ deadline, onCreated }) {
+export default function AdminResponseForm({ deadline, adminPassword, onCreated }) {
   const [form, setForm] = useState(EMPTY);
   const [now, setNow] = useState(Date.now());
   const [message, setMessage] = useState('');
@@ -42,15 +42,15 @@ export default function AdminResponseForm({ deadline, onCreated }) {
 
     setSaving(true);
     try {
-      const res = await fetch('/api/attendance', {
+      const res = await fetch('/api/attendance?admin=1', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
         body: JSON.stringify(form),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Submission failed.');
       setForm(EMPTY);
-      setMessage('Response added from admin form. The response remains editable from Admin Controls.');
+      setMessage('Response added. Admin-created responses remain unlocked.');
       onCreated?.(data.entry, data.deadline);
     } catch (error) {
       setMessage(error.message);
@@ -65,7 +65,7 @@ export default function AdminResponseForm({ deadline, onCreated }) {
         <div>
           <div className="eyebrow">RESPONSE FORM</div>
           <h4>Final Discord Attendance</h4>
-          <p>Admin entry form. This form stays available for admin use and does not use the respondent device lock.</p>
+          <p>Admin entry form. Responses added here remain unlocked for admin editing.</p>
         </div>
         <div className="deadline-time admin-form-countdown">{closed ? 'DEADLINE PASSED' : formatCountdown(remaining)}</div>
       </div>
@@ -103,7 +103,7 @@ export default function AdminResponseForm({ deadline, onCreated }) {
         </div>
 
         <div className="submit-row">
-          <button className="submit" disabled={closed || saving}>{saving ? 'SAVING…' : 'SUBMIT RESPONSE'}</button>
+          <button className="submit" type="submit" disabled={closed || saving}>{saving ? 'SAVING…' : 'SUBMIT RESPONSE'}</button>
         </div>
 
         {message && <div className={`notice ${message.includes('added') ? 'good' : 'danger'}`}>{message}</div>}
