@@ -13,8 +13,8 @@ function formatCountdown(ms) {
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
   return d > 0
-    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '0')}`
-    : `${String(h).padStart(2, '0')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '0')}`;
+    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '2')}`
+    : `${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '2')}`;
 }
 
 export default function AdminResponseForm({ deadline, adminPassword, onCreated, onResetLocked }) {
@@ -142,8 +142,10 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
     }
   }
 
+  const fieldStyle = { position: 'relative', zIndex: 60, pointerEvents: 'auto' };
+
   return (
-    <section className="admin-response-form">
+    <section className="admin-response-form" style={{ position: 'relative', zIndex: 20, pointerEvents: 'auto' }}>
       <div className="card-heading">
         <div className="eyebrow">RESPONSE FORM</div>
         <h2>Final Day Attendance</h2>
@@ -157,31 +159,31 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
         <div className="deadline-time">{closed ? 'DEADLINE PASSED' : formatCountdown(remaining)}</div>
       </div>
 
-      <form className="form" onSubmit={submit}>
-        <div className="field">
-          <label>IGN <span className="required">*</span></label>
-          <input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" disabled={saving || resetting} />
+      <form className="form" onSubmit={submit} style={{ position: 'relative', zIndex: 50, pointerEvents: 'auto' }}>
+        <div className="field" style={fieldStyle}>
+          <label style={{ pointerEvents: 'none' }}>IGN <span className="required">*</span></label>
+          <input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" disabled={saving} style={fieldStyle} />
         </div>
 
         <div className="grid-2">
-          <ChoiceGroup title="Attendance" name="admin-attendance" value={form.attendance} disabled={saving || resetting} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} />
-          <ChoiceGroup title="Pilot" name="admin-pilot" value={form.pilot} disabled={saving || resetting} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' No Pilot']]} onChange={(value) => update('pilot', value)} />
+          <ChoiceGroup title="Attendance" name="admin-attendance" value={form.attendance} disabled={saving} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} />
+          <ChoiceGroup title="Pilot" name="admin-pilot" value={form.pilot} disabled={saving} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' No Pilot']]} onChange={(value) => update('pilot', value)} />
         </div>
 
         <div className="grid-2">
-          <div className="field">
-            <label>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label>
-            <input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" disabled={saving || resetting} />
+          <div className="field" style={fieldStyle}>
+            <label style={{ pointerEvents: 'none' }}>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label>
+            <input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" disabled={saving} style={fieldStyle} />
           </div>
-          <div className="field">
-            <label>Hours</label>
-            <input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" disabled={saving || resetting} />
+          <div className="field" style={fieldStyle}>
+            <label style={{ pointerEvents: 'none' }}>Hours</label>
+            <input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" disabled={saving} style={fieldStyle} />
           </div>
         </div>
 
-        <div className="field">
-          <label>Notes <span>(optional)</span></label>
-          <textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" disabled={saving || resetting} />
+        <div className="field" style={fieldStyle}>
+          <label style={{ pointerEvents: 'none' }}>Notes <span>(optional)</span></label>
+          <textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" disabled={saving} style={fieldStyle} />
         </div>
 
         <div className="submit-row">
@@ -191,17 +193,9 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
         <div className="admin-reset-actions">
           <label className="admin-reset-label" htmlFor="reset-response-select">RESET A SPECIFIC RESPONSE</label>
           <div className="admin-reset-select-row">
-            <select
-              id="reset-response-select"
-              className="small-select reset-response-select"
-              value={selectedResetId}
-              onChange={(e) => setSelectedResetId(e.target.value)}
-              disabled={saving || resetting || !lockedEntries.length}
-            >
+            <select id="reset-response-select" className="small-select reset-response-select" value={selectedResetId} onChange={(e) => setSelectedResetId(e.target.value)} disabled={saving || resetting || !lockedEntries.length}>
               <option value="">SELECT LOCKED RESPONSE</option>
-              {lockedEntries.map((entry) => (
-                <option key={entry.id} value={entry.id}>{entry.ign || 'Unnamed response'}</option>
-              ))}
+              {lockedEntries.map((entry) => <option key={entry.id} value={entry.id}>{entry.ign || 'Unnamed response'}</option>)}
             </select>
             <button className="small-btn reset-locked-btn" type="button" onClick={requestResetSelected} disabled={saving || resetting || !selectedResetId}>
               {resetting ? 'RESETTING…' : 'RESET SELECTED'}
@@ -222,9 +216,7 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
             <h2 id="admin-submit-modal-title">SUCCESS</h2>
             <div className="notice good">✅ <b>{submitPopup.ign}</b> was added successfully.</div>
             <p>This admin-created response is <b>UNLOCKED</b> and can be edited or deleted from the admin controls.</p>
-            <div className="confirm-actions">
-              <button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button>
-            </div>
+            <div className="confirm-actions"><button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button></div>
           </div>
         </div>
       )}
@@ -234,24 +226,11 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
           <div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title">
             <div className="eyebrow">ADMIN ACTION</div>
             <h2 id="reset-modal-title">{resetPopup.type === 'one' ? 'RESET RESPONSE?' : 'RESET ALL RESPONSES?'}</h2>
-            <div className="notice danger">
-              ⚠️{' '}
-              <b>
-                {resetPopup.type === 'one'
-                  ? `${resetPopup.target?.ign || 'This respondent'} will be reset.`
-                  : 'All locked respondent responses will be removed.'}
-              </b>
-            </div>
-            <p>
-              {resetPopup.type === 'one'
-                ? 'This removes the selected locked response and allows that Discord user to submit again.'
-                : 'This removes every locked respondent response. Admin-created unlocked responses will remain.'}
-            </p>
+            <div className="notice danger"><b>⚠️ {resetPopup.type === 'one' ? `${resetPopup.target?.ign || 'This respondent'} will be reset.` : 'All locked respondent responses will be removed.'}</b></div>
+            <p>{resetPopup.type === 'one' ? 'This removes the selected locked response and allows that Discord user to submit again.' : 'This removes every locked respondent response. Admin-created unlocked responses will remain.'}</p>
             <div className="confirm-actions">
               <button className="small-btn" type="button" onClick={() => setResetPopup(null)} disabled={resetting}>CANCEL</button>
-              <button className="small-btn danger-btn modal-delete-btn" type="button" onClick={confirmReset} disabled={resetting}>
-                {resetting ? 'RESETTING…' : 'RESET'}
-              </button>
+              <button className="small-btn danger-btn modal-delete-btn" type="button" onClick={confirmReset} disabled={resetting}>{resetting ? 'RESETTING…' : 'RESET'}</button>
             </div>
           </div>
         </div>
@@ -262,13 +241,13 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
 
 function ChoiceGroup({ title, name, value, disabled, options, onChange }) {
   return (
-    <div className="field">
-      <label>{title} <span className="required">*</span></label>
-      <div className="choices">
+    <div className="field" style={{ position: 'relative', zIndex: 55 }}>
+      <label style={{ pointerEvents: 'none' }}>{title} <span className="required">*</span></label>
+      <div className="choices" style={{ position: 'relative', zIndex: 56 }}>
         {options.map(([valueOption, text], index) => (
           <div className="choice" key={valueOption}>
             <input id={`${name}-${index}`} type="radio" name={name} checked={value === valueOption} onChange={() => onChange(valueOption)} disabled={disabled} />
-            <label htmlFor={`${name}-${index}`}>{text}</label>
+            <label htmlFor={`${name}-${index}`} style={{ pointerEvents: 'auto' }}>{text}</label>
           </div>
         ))}
       </div>
