@@ -1,16 +1,4 @@
 {
   "deadline": "2026-09-09T07:17:29.727Z",
-  "entries": [
-    {
-      "id": "ef2b2372-071a-4431-8138-189f46cb6f42",
-      "ign": "asd",
-      "attendance": "attending",
-      "pilot": "have_pilot",
-      "pilotName": "asda",
-      "hours": "5",
-      "notes": "adas",
-      "submittedAt": "2026-09-07T07:21:52.898Z",
-      "locked": true
-    }
-  ]
+  "entries": []
 }
