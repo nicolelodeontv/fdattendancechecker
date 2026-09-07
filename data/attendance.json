@@ -1,16 +1,4 @@
 {
   "deadline": "2026-09-09T07:17:29.727Z",
-  "entries": [
-    {
-      "id": "d1c1b159-5507-415c-b368-129bea29d1d7",
-      "ign": "Chaos",
-      "attendance": "attending",
-      "pilot": "have_pilot",
-      "pilotName": "Wow",
-      "hours": "5",
-      "notes": "Nothing",
-      "submittedAt": "2026-09-07T08:50:05.656Z",
-      "locked": false
-    }
-  ]
+  "entries": []
 }
