@@ -1,16 +1,4 @@
 {
   "deadline": "2026-09-09T07:17:29.727Z",
-  "entries": [
-    {
-      "id": "e3c39273-5138-4dc0-a2c7-df2344cebbcb",
-      "ign": "a",
-      "attendance": "attending",
-      "pilot": "have_pilot",
-      "pilotName": "a",
-      "hours": "a",
-      "notes": "a",
-      "submittedAt": "2026-09-07T07:53:16.319Z",
-      "locked": false
-    }
-  ]
+  "entries": []
 }
