@@ -14,7 +14,7 @@ function formatCountdown(ms) {
   const s = total % 60;
   return d > 0
     ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-    : `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    : `${String(h).padStart(2, '0')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '0')}`;
 }
 
 export default function AdminResponseForm({ deadline, adminPassword, onCreated, onResetLocked }) {
@@ -23,6 +23,7 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [submitPopup, setSubmitPopup] = useState(null);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -55,8 +56,10 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Submission failed.');
 
+      const submittedIgn = data.entry?.ign || form.ign.trim();
       setForm(EMPTY);
       setMessage('Response submitted successfully. This admin-created response is not locked.');
+      setSubmitPopup({ ign: submittedIgn });
       onCreated?.(data.entry, data.deadline);
     } catch (error) {
       setMessage(error.message);
@@ -146,6 +149,20 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
 
         {message && <div className={`notice ${message.includes('successfully') || message.includes('Reset complete') ? 'good' : 'danger'}`}>{message}</div>}
       </form>
+
+      {submitPopup && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget && !saving) setSubmitPopup(null); }}>
+          <div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="admin-submit-modal-title">
+            <div className="eyebrow">RESPONSE SUBMITTED</div>
+            <h2 id="admin-submit-modal-title">SUCCESS</h2>
+            <div className="notice good">✅ <b>{submitPopup.ign}</b> was added successfully.</div>
+            <p>This admin-created response is <b>UNLOCKED</b> and can be edited or deleted from the admin controls.</p>
+            <div className="confirm-actions">
+              <button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
