@@ -69,7 +69,7 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated }
       <div className="card-heading">
         <div className="eyebrow">RESPONSE FORM</div>
         <h2>Final Discord Attendance</h2>
-        <p>Complete your attendance, pilot, and availability details. Once submitted, your response is locked on this device.</p>
+        <p>Complete your attendance, pilot, and availability details. Admin-created responses are not locked.</p>
       </div>
 
       <div className="deadline">
@@ -82,32 +82,32 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated }
       <form className="form" onSubmit={submit}>
         <div className="field">
           <label>IGN <span className="required">*</span></label>
-          <input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" disabled={closed || saving} />
+          <input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" disabled={saving} />
         </div>
 
         <div className="grid-2">
-          <ChoiceGroup title="Attendance" name="admin-attendance" value={form.attendance} disabled={closed || saving} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} />
-          <ChoiceGroup title="Pilot" name="admin-pilot" value={form.pilot} disabled={closed || saving} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' No Pilot']]} onChange={(value) => update('pilot', value)} />
+          <ChoiceGroup title="Attendance" name="admin-attendance" value={form.attendance} disabled={saving} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} />
+          <ChoiceGroup title="Pilot" name="admin-pilot" value={form.pilot} disabled={saving} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' No Pilot']]} onChange={(value) => update('pilot', value)} />
         </div>
 
         <div className="grid-2">
           <div className="field">
             <label>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label>
-            <input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" disabled={closed || saving || form.pilot !== 'have_pilot'} />
+            <input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" disabled={saving || form.pilot !== 'have_pilot'} />
           </div>
           <div className="field">
             <label>Hours</label>
-            <input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" disabled={closed || saving} />
+            <input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" disabled={saving} />
           </div>
         </div>
 
         <div className="field">
           <label>Notes <span>(optional)</span></label>
-          <textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" disabled={closed || saving} />
+          <textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" disabled={saving} />
         </div>
 
         <div className="submit-row">
-          <button className="submit" type="submit" disabled={closed || saving}>{saving ? 'SAVING…' : 'SUBMIT RESPONSE'}</button>
+          <button className="submit" type="submit" disabled={saving}>{saving ? 'SAVING…' : 'SUBMIT RESPONSE'}</button>
         </div>
 
         {message && <div className={`notice ${message.includes('successfully') ? 'good' : 'danger'}`}>{message}</div>}
