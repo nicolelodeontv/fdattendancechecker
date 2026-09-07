@@ -26,6 +26,19 @@ export async function POST(req){try{const url=new URL(req.url);const isAdmin=url
     await githubPut(data,sha,`Admin reset locked FD attendance responses: ${lockedCount} removed`);
     return NextResponse.json({ok:true,removed:lockedCount});
   }
+  if(isAdmin&&body?.action==='reset_one'){
+    const id=String(body.id||'');
+    if(!id)return NextResponse.json({error:'Response id is required.'},{status:400});
+    const{data,sha}=await githubGet();
+    const entries=data.entries||[];
+    const index=entries.findIndex((entry)=>String(entry.id)===id);
+    if(index===-1)return NextResponse.json({error:'Response not found.'},{status:404});
+    if(entries[index].locked===false)return NextResponse.json({error:'This response is already unlocked.'},{status:400});
+    const target=normalizeEntry(entries[index]);
+    data.entries=entries.filter((entry)=>String(entry.id)!==id);
+    await githubPut(data,sha,`Admin reset FD attendance response: ${target.ign || id}`);
+    return NextResponse.json({ok:true,removed:1,entry:target});
+  }
   const discord=await discordUser(req);if(!isAdmin&&!discord)return NextResponse.json({error:'Please log in with Discord first.'},{status:401});const ign=String(body.ign??'').trim();if(!ign)return NextResponse.json({error:'IGN is required.'},{status:400});if(!['attending','not_attending'].includes(body.attendance))return NextResponse.json({error:'Select attendance.'},{status:400});if(!['have_pilot','no_pilot'].includes(body.pilot))return NextResponse.json({error:'Select pilot status.'},{status:400});if(body.pilot==='have_pilot'&&!String(body.pilotName??'').trim())return NextResponse.json({error:'Pilot Name is required when you have a pilot.'},{status:400});const{data,sha}=await githubGet();const now=new Date();const deadline=data.deadline||new Date(now.getTime()+48*60*60*1000).toISOString();if(!isAdmin&&Date.now()>Date.parse(deadline))return NextResponse.json({error:'The response deadline has passed.'},{status:403});
   if(!isAdmin){const existing=(data.entries||[]).find(x=>String(x.discordId||'')===String(discord.discordId));if(existing)return NextResponse.json({error:'A response already exists for this Discord account.',entry:normalizeEntry(existing)},{status:409});}
   const entry=normalizeEntry({...body,id:crypto.randomUUID(),submittedAt:now.toISOString(),locked:!isAdmin,discordId:isAdmin?'':discord.discordId,discordUsername:isAdmin?'':discord.username});data.deadline=deadline;data.entries=[...(data.entries||[]),entry];await githubPut(data,sha,`${isAdmin?'Admin add':'Add'} FD attendance response: ${ign}`);return NextResponse.json({entry,deadline},{status:201});
