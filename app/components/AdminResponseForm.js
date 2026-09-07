@@ -14,7 +14,7 @@ function formatCountdown(ms) {
   const s = total % 60;
   return d > 0
     ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-    : `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    : `${String(h).padStart(2, '0')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '0')}`;
 }
 
 export default function AdminResponseForm({ deadline, adminPassword, onCreated, onResetLocked }) {
@@ -24,15 +24,34 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [submitPopup, setSubmitPopup] = useState(null);
+  const [lockedEntries, setLockedEntries] = useState([]);
+  const [selectedResetId, setSelectedResetId] = useState('');
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    loadLockedEntries();
+  }, [adminPassword]);
+
   const remaining = useMemo(() => (deadline ? Date.parse(deadline) - now : 0), [deadline, now]);
   const closed = remaining <= 0;
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
+
+  async function loadLockedEntries() {
+    if (!adminPassword) return;
+    try {
+      const res = await fetch('/api/attendance?admin=1', {
+        headers: { 'x-admin-password': adminPassword },
+        cache: 'no-store',
+      });
+      const data = await res.json();
+      if (!res.ok) return;
+      setLockedEntries((data.entries || []).filter((entry) => entry.locked));
+    } catch {}
+  }
 
   async function submit(event) {
     event.preventDefault();
@@ -61,10 +80,46 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
       setMessage('Response submitted successfully. This admin-created response is not locked.');
       setSubmitPopup({ ign: submittedIgn });
       onCreated?.(data.entry, data.deadline);
+      await loadLockedEntries();
     } catch (error) {
       setMessage(error.message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function resetSelectedResponse() {
+    setMessage('');
+    if (resetting || !selectedResetId) return;
+    const target = lockedEntries.find((entry) => String(entry.id) === String(selectedResetId));
+    if (!target) return;
+
+    const confirmed = window.confirm(
+      `Reset the response for ${target.ign || 'this respondent'}? Their locked response will be removed so they can submit again.`
+    );
+    if (!confirmed) return;
+
+    setResetting(true);
+    try {
+      const res = await fetch('/api/attendance?admin=1', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': adminPassword,
+        },
+        body: JSON.stringify({ action: 'reset_one', id: target.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not reset response.');
+
+      setSelectedResetId('');
+      setMessage(`${target.ign || 'Response'} has been reset. They can submit again.`);
+      await loadLockedEntries();
+      onResetLocked?.();
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setResetting(false);
     }
   }
 
@@ -86,7 +141,9 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not reset responses.');
+      setSelectedResetId('');
       setMessage(`Reset complete. ${data.removed || 0} locked response${data.removed === 1 ? '' : 's'} removed.`);
+      await loadLockedEntries();
       onResetLocked?.();
     } catch (error) {
       setMessage(error.message);
@@ -142,12 +199,30 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
         </div>
 
         <div className="admin-reset-actions">
-          <button className="small-btn reset-locked-btn" type="button" onClick={resetLockedResponses} disabled={saving || resetting}>
+          <label className="admin-reset-label" htmlFor="reset-response-select">RESET A SPECIFIC RESPONSE</label>
+          <div className="admin-reset-select-row">
+            <select
+              id="reset-response-select"
+              className="small-select reset-response-select"
+              value={selectedResetId}
+              onChange={(e) => setSelectedResetId(e.target.value)}
+              disabled={saving || resetting || !lockedEntries.length}
+            >
+              <option value="">SELECT LOCKED RESPONSE</option>
+              {lockedEntries.map((entry) => (
+                <option key={entry.id} value={entry.id}>{entry.ign || 'Unnamed response'}</option>
+              ))}
+            </select>
+            <button className="small-btn reset-locked-btn" type="button" onClick={resetSelectedResponse} disabled={saving || resetting || !selectedResetId}>
+              {resetting ? 'RESETTING…' : 'RESET SELECTED'}
+            </button>
+          </div>
+          <button className="small-btn reset-locked-btn reset-all-btn" type="button" onClick={resetLockedResponses} disabled={saving || resetting}>
             {resetting ? 'RESETTING…' : 'RESET ALL LOCKED RESPONSES'}
           </button>
         </div>
 
-        {message && <div className={`notice ${message.includes('successfully') || message.includes('Reset complete') ? 'good' : 'danger'}`}>{message}</div>}
+        {message && <div className={`notice ${message.includes('successfully') || message.includes('Reset complete') || message.includes('has been reset') ? 'good' : 'danger'}`}>{message}</div>}
       </form>
 
       {submitPopup && (
