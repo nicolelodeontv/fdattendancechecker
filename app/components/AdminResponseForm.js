@@ -55,7 +55,7 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated }
       if (!res.ok) throw new Error(data.error || 'Submission failed.');
 
       setForm(EMPTY);
-      setMessage('Response added. Admin-created responses remain UNLOCKED.');
+      setMessage('Response submitted successfully. This admin-created response is not locked.');
       onCreated?.(data.entry, data.deadline);
     } catch (error) {
       setMessage(error.message);
@@ -66,15 +66,13 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated }
 
   return (
     <section className="admin-response-form">
-      <div className="admin-form-head">
-        <div>
-          <div className="eyebrow">RESPONSE FORM</div>
-          <h4>Final Discord Attendance</h4>
-          <p>Admin response form. Submissions made here are not locked.</p>
-        </div>
+      <div className="card-heading">
+        <div className="eyebrow">RESPONSE FORM</div>
+        <h2>Final Discord Attendance</h2>
+        <p>Complete your attendance, pilot, and availability details. Once submitted, your response is locked on this device.</p>
       </div>
 
-      <div className="deadline admin-form-deadline">
+      <div className="deadline">
         <div className="deadline-copy">
           {ICONS.hourglass} <b>Response deadline:</b> 48 hours from the start of this response period.
         </div>
@@ -112,7 +110,7 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated }
           <button className="submit" type="submit" disabled={closed || saving}>{saving ? 'SAVING…' : 'SUBMIT RESPONSE'}</button>
         </div>
 
-        {message && <div className={`notice ${message.includes('added') ? 'good' : 'danger'}`}>{message}</div>}
+        {message && <div className={`notice ${message.includes('successfully') ? 'good' : 'danger'}`}>{message}</div>}
       </form>
     </section>
   );
