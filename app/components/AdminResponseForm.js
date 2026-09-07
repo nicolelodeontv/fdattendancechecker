@@ -32,9 +32,10 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated }
   const closed = remaining <= 0;
   const update = (key, value) => setForm((current) => ({ ...current, [key]: value }));
 
-  async function submit(e) {
-    e.preventDefault();
+  async function submit(event) {
+    event.preventDefault();
     setMessage('');
+
     if (!form.ign.trim() || !form.attendance || !form.pilot || (form.pilot === 'have_pilot' && !form.pilotName.trim())) {
       setMessage('Please complete the required fields.');
       return;
@@ -44,13 +45,17 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated }
     try {
       const res = await fetch('/api/attendance?admin=1', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-password': adminPassword,
+        },
         body: JSON.stringify(form),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Submission failed.');
+
       setForm(EMPTY);
-      setMessage('Response added. Admin-created responses remain unlocked.');
+      setMessage('Response added. Admin-created responses remain UNLOCKED.');
       onCreated?.(data.entry, data.deadline);
     } catch (error) {
       setMessage(error.message);
@@ -65,13 +70,14 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated }
         <div>
           <div className="eyebrow">RESPONSE FORM</div>
           <h4>Final Discord Attendance</h4>
-          <p>Admin entry form. Responses added here remain unlocked for admin editing.</p>
+          <p>Admin response form. Submissions made here are not locked.</p>
         </div>
-        <div className="deadline-time admin-form-countdown">{closed ? 'DEADLINE PASSED' : formatCountdown(remaining)}</div>
       </div>
 
       <div className="deadline admin-form-deadline">
-        <div className="deadline-copy">{ICONS.hourglass} <b>Response deadline:</b> 48 hours from the start of this response period.</div>
+        <div className="deadline-copy">
+          {ICONS.hourglass} <b>Response deadline:</b> 48 hours from the start of this response period.
+        </div>
         <div className="deadline-time">{closed ? 'DEADLINE PASSED' : formatCountdown(remaining)}</div>
       </div>
 
