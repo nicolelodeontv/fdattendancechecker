@@ -270,32 +270,32 @@ export default function Home() {
                 <form className="form" onSubmit={submit}>
                   <div className="field">
                     <label>IGN <span className="required">*</span></label>
-                    <input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" disabled={closed || loading} />
+                    <input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" disabled={loading} />
                   </div>
 
                   <div className="grid-2">
-                    <ChoiceGroup title="Attendance" name="attendance" value={form.attendance} disabled={closed} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} />
-                    <ChoiceGroup title="Pilot" name="pilot" value={form.pilot} disabled={closed} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' No Pilot']]} onChange={(value) => update('pilot', value)} />
+                    <ChoiceGroup title="Attendance" name="attendance" value={form.attendance} disabled={loading} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} />
+                    <ChoiceGroup title="Pilot" name="pilot" value={form.pilot} disabled={loading} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' No Pilot']]} onChange={(value) => update('pilot', value)} />
                   </div>
 
                   <div className="grid-2">
                     <div className="field">
                       <label>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label>
-                      <input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" disabled={closed || form.pilot !== 'have_pilot'} />
+                      <input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" disabled={loading || form.pilot !== 'have_pilot'} />
                     </div>
                     <div className="field">
                       <label>Hours</label>
-                      <input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" disabled={closed} />
+                      <input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" disabled={loading} />
                     </div>
                   </div>
 
                   <div className="field">
                     <label>Notes <span>(optional)</span></label>
-                    <textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" disabled={closed} />
+                    <textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" disabled={loading} />
                   </div>
 
                   <div className="submit-row">
-                    <button className="submit" disabled={closed || loading}>SUBMIT RESPONSE</button>
+                    <button className="submit" type="submit" disabled={closed || loading}>SUBMIT RESPONSE</button>
                   </div>
 
                   {message && <div className={`notice ${message.includes('locked') ? 'good' : 'danger'}`}>{message}</div>}
@@ -384,6 +384,7 @@ export default function Home() {
             <div className="eyebrow">ADMIN ACTION</div>
             <h2 id="delete-modal-title">DELETE RESPONSE?</h2>
             <p>Are you sure you want to delete <b>{deleteTarget.ign || 'this response'}</b>? This action cannot be undone.</p>
+            {deleteMessage && <div className="notice danger">{deleteMessage}</div>}
             <div className="confirm-actions">
               <button className="small-btn" type="button" disabled={deleteBusy} onClick={cancelDelete}>CANCEL</button>
               <button className="small-btn danger-btn modal-delete-btn" type="button" disabled={deleteBusy} onClick={confirmDelete}>{deleteBusy ? 'DELETING…' : 'DELETE'}</button>
@@ -443,18 +444,18 @@ function AdminEntry({ entry, onSave, onDelete }) {
       </div>
 
       <div className="entry-fields">
-        <div className="field"><label>IGN</label><input value={draft.ign} onChange={(e) => patch('ign', e.target.value)} placeholder="IGN" /></div>
-        <div className="field"><label>Attendance</label><select value={draft.attendance} onChange={(e) => patch('attendance', e.target.value)}><option value="attending">✅ Attending</option><option value="not_attending">❌ Not Attending</option></select></div>
-        <div className="field"><label>Pilot</label><select value={draft.pilot} onChange={(e) => patch('pilot', e.target.value)}><option value="have_pilot">✅ Have Pilot</option><option value="no_pilot">❌ No Pilot</option></select></div>
-        <div className="field"><label>Pilot Name</label><input value={draft.pilotName} onChange={(e) => patch('pilotName', e.target.value)} placeholder="Pilot name" /></div>
-        <div className="field"><label>Hours</label><input value={draft.hours} onChange={(e) => patch('hours', e.target.value)} placeholder="Hours" /></div>
-        <div className="field admin-notes-field"><label>Notes</label><textarea value={draft.notes} onChange={(e) => patch('notes', e.target.value)} placeholder="Notes" /></div>
+        <div className="field"><label>IGN</label><input value={draft.ign} onChange={(e) => patch('ign', e.target.value)} placeholder="IGN" disabled={saving} /></div>
+        <div className="field"><label>Attendance</label><select value={draft.attendance} onChange={(e) => patch('attendance', e.target.value)} disabled={saving}><option value="attending">✅ Attending</option><option value="not_attending">❌ Not Attending</option></select></div>
+        <div className="field"><label>Pilot</label><select value={draft.pilot} onChange={(e) => patch('pilot', e.target.value)} disabled={saving}><option value="have_pilot">✅ Have Pilot</option><option value="no_pilot">❌ No Pilot</option></select></div>
+        <div className="field"><label>Pilot Name</label><input value={draft.pilotName} onChange={(e) => patch('pilotName', e.target.value)} placeholder="Pilot name" disabled={saving} /></div>
+        <div className="field"><label>Hours</label><input value={draft.hours} onChange={(e) => patch('hours', e.target.value)} placeholder="Hours" disabled={saving} /></div>
+        <div className="field admin-notes-field"><label>Notes</label><textarea value={draft.notes} onChange={(e) => patch('notes', e.target.value)} placeholder="Notes" disabled={saving} /></div>
       </div>
 
       <div className="admin-actions">
         <button className="small-btn" type="button" disabled={saving} onClick={save}>{saving ? 'SAVING…' : 'SAVE'}</button>
-        <button className="small-btn danger-btn" type="button" onClick={() => onDelete(entry.id)}>DELETE</button>
-        {status && <span className="badge info">{status}</span>}
+        <button className="small-btn danger-btn" type="button" disabled={saving} onClick={() => onDelete(entry.id)}>DELETE</button>
+        {status && <span className={`badge ${status === 'Saved' ? 'good' : 'danger'}`}>{status}</span>}
       </div>
     </div>
   );
