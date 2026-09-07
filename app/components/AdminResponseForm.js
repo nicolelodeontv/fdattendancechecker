@@ -68,7 +68,7 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated }
     <section className="admin-response-form">
       <div className="card-heading">
         <div className="eyebrow">RESPONSE FORM</div>
-        <h2>Final Discord Attendance</h2>
+        <h2>Final Day Attendance</h2>
         <p>Complete your attendance, pilot, and availability details. Admin-created responses are not locked.</p>
       </div>
 
