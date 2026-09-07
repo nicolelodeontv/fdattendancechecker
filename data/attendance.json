@@ -1,16 +1,4 @@
 {
   "deadline": "2026-09-09T07:17:29.727Z",
-  "entries": [
-    {
-      "id": "b92d8f99-4f67-44cf-81f6-8d65058a0048",
-      "ign": "CHAOS MICHOL",
-      "attendance": "attending",
-      "pilot": "have_pilot",
-      "pilotName": "NONE",
-      "hours": "5",
-      "notes": "ONLINE",
-      "submittedAt": "2026-09-07T07:47:56.957Z",
-      "locked": false
-    }
-  ]
+  "entries": []
 }
