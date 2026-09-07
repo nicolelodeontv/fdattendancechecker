@@ -86,18 +86,27 @@ export default function Home() {
         setForm({ ign: data.entry.ign, attendance: data.entry.attendance, pilot: data.entry.pilot, pilotName: data.entry.pilotName, hours: data.entry.hours, notes: data.entry.notes });
         localStorage.setItem('fd_attendance_entry', JSON.stringify(data.entry));
       } else {
-        const saved = localStorage.getItem('fd_attendance_entry');
-        if (saved) {
-          try {
-            const mine = JSON.parse(saved);
-            setLockedEntry(mine);
-            setForm({ ign: mine.ign, attendance: mine.attendance, pilot: mine.pilot, pilotName: mine.pilotName, hours: mine.hours, notes: mine.notes });
-          } catch { localStorage.removeItem('fd_attendance_entry'); }
-        }
+        // The API is the source of truth. Do not resurrect a deleted/reset response from localStorage.
+        localStorage.removeItem('fd_attendance_entry');
+        setLockedEntry(null);
+        setForm(EMPTY);
       }
     } catch (error) { setMessage(error.message); }
     finally { setLoading(false); }
   };
+
+  async function loadAdminEntries(password = adminPassword) {
+    if (!password) return;
+    const res = await fetch('/api/attendance?admin=1', {
+      headers: { 'x-admin-password': password },
+      cache: 'no-store',
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Unable to refresh responses.');
+    setEntries(data.entries || []);
+    if (data.deadline) setDeadline(data.deadline);
+    return data;
+  }
 
   useEffect(() => {
     load();
@@ -162,8 +171,7 @@ export default function Home() {
     const pw = sessionStorage.getItem('fd_admin');
     if (!pw) return;
     setAdminPassword(pw); setAdminAuthed(true); setAdminOpen(true);
-    fetch('/api/attendance?admin=1', { headers: { 'x-admin-password': pw }, cache: 'no-store' })
-      .then((res) => res.json()).then((data) => { if (data.entries) setEntries(data.entries); if (data.deadline) setDeadline(data.deadline); }).catch(() => {});
+    loadAdminEntries(pw).catch(() => {});
   }, []);
 
   async function saveEntry(entry) {
@@ -251,7 +259,7 @@ export default function Home() {
             {adminOpen && !adminAuthed && <form className="admin-login" onSubmit={adminLogin}><div className="password-field"><input type={showAdminPassword ? 'text' : 'password'} value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="Admin password" /><button className="password-toggle" type="button" aria-label={showAdminPassword ? 'Hide password' : 'Show password'} onClick={() => setShowAdminPassword((value) => !value)}>{showAdminPassword ? '◉' : '◌'}</button></div><button className="small-btn" type="submit">UNLOCK</button></form>}
             {adminError && adminOpen && <div className="notice danger">{adminError}</div>}
             {deleteMessage && <div className="notice good">{deleteMessage}</div>}
-            {adminOpen && adminAuthed && <div style={{ marginTop: 10 }}><AdminResponseForm deadline={deadline} adminPassword={adminPassword} onCreated={(entry, nextDeadline) => { setEntries((old) => [...old, entry]); if (nextDeadline) setDeadline(nextDeadline); }} /><div className="notice good" style={{ marginTop: 10 }}>Admin-created responses remain <b>UNLOCKED</b>. Respondent submissions remain <b>🔒 LOCKED</b>.</div>{entries.length === 0 ? <div className="notice" style={{ marginTop: 10 }}>No submitted responses yet. Use the admin response form above to add one.</div> : entries.map((entry) => <AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry} />)}</div>}
+            {adminOpen && adminAuthed && <div style={{ marginTop: 10 }}><AdminResponseForm deadline={deadline} adminPassword={adminPassword} onCreated={(entry, nextDeadline) => { setEntries((old) => [...old, entry]); if (nextDeadline) setDeadline(nextDeadline); }} onResetLocked={() => { loadAdminEntries().catch((error) => setMessage(error.message)); }} /><div className="notice good" style={{ marginTop: 10 }}>Admin-created responses remain <b>UNLOCKED</b>. Respondent submissions remain <b>🔒 LOCKED</b>.</div>{entries.length === 0 ? <div className="notice" style={{ marginTop: 10 }}>No submitted responses yet. Use the admin response form above to add one.</div> : entries.map((entry) => <AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry} />)}</div>}
           </section>
         </main>
 
