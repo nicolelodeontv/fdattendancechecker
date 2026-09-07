@@ -13,7 +13,7 @@ function formatCountdown(ms) {
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
   return d > 0
-    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '0')}`
     : `${String(h).padStart(2, '0')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '0')}`;
 }
 
@@ -24,6 +24,7 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [submitPopup, setSubmitPopup] = useState(null);
+  const [resetPopup, setResetPopup] = useState(null);
   const [lockedEntries, setLockedEntries] = useState([]);
   const [selectedResetId, setSelectedResetId] = useState('');
 
@@ -88,61 +89,50 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
     }
   }
 
-  async function resetSelectedResponse() {
+  function requestResetSelected() {
     setMessage('');
     if (resetting || !selectedResetId) return;
     const target = lockedEntries.find((entry) => String(entry.id) === String(selectedResetId));
     if (!target) return;
-
-    const confirmed = window.confirm(
-      `Reset the response for ${target.ign || 'this respondent'}? Their locked response will be removed so they can submit again.`
-    );
-    if (!confirmed) return;
-
-    setResetting(true);
-    try {
-      const res = await fetch('/api/attendance?admin=1', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-password': adminPassword,
-        },
-        body: JSON.stringify({ action: 'reset_one', id: target.id }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Could not reset response.');
-
-      setSelectedResetId('');
-      setMessage(`${target.ign || 'Response'} has been reset. They can submit again.`);
-      await loadLockedEntries();
-      onResetLocked?.();
-    } catch (error) {
-      setMessage(error.message);
-    } finally {
-      setResetting(false);
-    }
+    setResetPopup({ type: 'one', target });
   }
 
-  async function resetLockedResponses() {
+  function requestResetAll() {
     setMessage('');
     if (resetting) return;
-    const confirmed = window.confirm('Reset all locked respondent responses? This will remove every locked response and allow those Discord users to submit again. Admin-created unlocked responses will remain.');
-    if (!confirmed) return;
+    setResetPopup({ type: 'all' });
+  }
 
+  async function confirmReset() {
+    if (!resetPopup || resetting) return;
+
+    const resetType = resetPopup.type;
+    const target = resetPopup.target;
+    setResetPopup(null);
     setResetting(true);
+
     try {
+      const body = resetType === 'one'
+        ? { action: 'reset_one', id: target.id }
+        : { action: 'reset_locked' };
+
       const res = await fetch('/api/attendance?admin=1', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'x-admin-password': adminPassword,
         },
-        body: JSON.stringify({ action: 'reset_locked' }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not reset responses.');
+
       setSelectedResetId('');
-      setMessage(`Reset complete. ${data.removed || 0} locked response${data.removed === 1 ? '' : 's'} removed.`);
+      if (resetType === 'one') {
+        setMessage(`${target.ign || 'Response'} has been reset. They can submit again.`);
+      } else {
+        setMessage(`Reset complete. ${data.removed || 0} locked response${data.removed === 1 ? '' : 's'} removed.`);
+      }
       await loadLockedEntries();
       onResetLocked?.();
     } catch (error) {
@@ -213,11 +203,11 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
                 <option key={entry.id} value={entry.id}>{entry.ign || 'Unnamed response'}</option>
               ))}
             </select>
-            <button className="small-btn reset-locked-btn" type="button" onClick={resetSelectedResponse} disabled={saving || resetting || !selectedResetId}>
+            <button className="small-btn reset-locked-btn" type="button" onClick={requestResetSelected} disabled={saving || resetting || !selectedResetId}>
               {resetting ? 'RESETTING…' : 'RESET SELECTED'}
             </button>
           </div>
-          <button className="small-btn reset-locked-btn reset-all-btn" type="button" onClick={resetLockedResponses} disabled={saving || resetting}>
+          <button className="small-btn reset-locked-btn reset-all-btn" type="button" onClick={requestResetAll} disabled={saving || resetting}>
             {resetting ? 'RESETTING…' : 'RESET ALL LOCKED RESPONSES'}
           </button>
         </div>
@@ -234,6 +224,34 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
             <p>This admin-created response is <b>UNLOCKED</b> and can be edited or deleted from the admin controls.</p>
             <div className="confirm-actions">
               <button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {resetPopup && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget && !resetting) setResetPopup(null); }}>
+          <div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="reset-modal-title">
+            <div className="eyebrow">ADMIN ACTION</div>
+            <h2 id="reset-modal-title">{resetPopup.type === 'one' ? 'RESET RESPONSE?' : 'RESET ALL RESPONSES?'}</h2>
+            <div className="notice danger">
+              ⚠️{' '}
+              <b>
+                {resetPopup.type === 'one'
+                  ? `${resetPopup.target?.ign || 'This respondent'} will be reset.`
+                  : 'All locked respondent responses will be removed.'}
+              </b>
+            </div>
+            <p>
+              {resetPopup.type === 'one'
+                ? 'This removes the selected locked response and allows that Discord user to submit again.'
+                : 'This removes every locked respondent response. Admin-created unlocked responses will remain.'}
+            </p>
+            <div className="confirm-actions">
+              <button className="small-btn" type="button" onClick={() => setResetPopup(null)} disabled={resetting}>CANCEL</button>
+              <button className="small-btn danger-btn modal-delete-btn" type="button" onClick={confirmReset} disabled={resetting}>
+                {resetting ? 'RESETTING…' : 'RESET'}
+              </button>
             </div>
           </div>
         </div>
