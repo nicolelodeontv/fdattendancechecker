@@ -93,7 +93,7 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated }
         <div className="grid-2">
           <div className="field">
             <label>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label>
-            <input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" disabled={saving || form.pilot !== 'have_pilot'} />
+            <input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" disabled={saving} />
           </div>
           <div className="field">
             <label>Hours</label>
