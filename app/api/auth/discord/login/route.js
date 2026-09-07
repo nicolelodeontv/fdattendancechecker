@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 export async function GET(req) {
   const clientId = process.env.DISCORD_CLIENT_ID;
   if (!clientId) return NextResponse.json({ error: 'DISCORD_CLIENT_ID is not configured.' }, { status: 500 });
@@ -14,6 +18,7 @@ export async function GET(req) {
   auth.searchParams.set('state', state);
 
   const response = NextResponse.redirect(auth);
+  response.headers.set('Cache-Control', 'no-store, private, max-age=0');
   response.cookies.set('discord_oauth_state', state, {
     httpOnly: true,
     secure: true,
