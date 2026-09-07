@@ -19,11 +19,7 @@ async function githubPut(data, sha, message) {
   const token = process.env.GITHUB_TOKEN;
   if (!token) throw new Error('GITHUB_TOKEN is not configured');
   const content = Buffer.from(JSON.stringify(data, null, 2) + '\n').toString('base64');
-  const res = await fetch(API, {
-    method: 'PUT',
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, content, sha, branch: 'main' }),
-  });
+  const res = await fetch(API, { method: 'PUT', headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' }, body: JSON.stringify({ message, content, sha, branch: 'main' }) });
   if (!res.ok) throw new Error(`GitHub PUT failed: ${res.status}`);
   return res.json();
 }
@@ -34,78 +30,43 @@ function adminOk(req) {
 }
 
 function normalizeEntry(entry) {
-  return {
-    id: String(entry.id),
-    ign: String(entry.ign ?? '').trim(),
-    attendance: entry.attendance === 'not_attending' ? 'not_attending' : 'attending',
-    pilot: entry.pilot === 'no_pilot' ? 'no_pilot' : 'have_pilot',
-    pilotName: String(entry.pilotName ?? '').trim(),
-    hours: String(entry.hours ?? '').trim(),
-    notes: String(entry.notes ?? '').trim(),
-    submittedAt: entry.submittedAt,
-    locked: true,
-  };
+  return { id: String(entry.id), ign: String(entry.ign ?? '').trim(), attendance: entry.attendance === 'not_attending' ? 'not_attending' : 'attending', pilot: entry.pilot === 'no_pilot' ? 'no_pilot' : 'have_pilot', pilotName: String(entry.pilotName ?? '').trim(), hours: String(entry.hours ?? '').trim(), notes: String(entry.notes ?? '').trim(), submittedAt: entry.submittedAt, locked: true };
 }
 
-export async function GET() {
+export async function GET(req) {
   try {
+    if (new URL(req.url).searchParams.get('admin') === '1' && !adminOk(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     let { data, sha } = await githubGet();
-    if (!data.deadline) {
-      data.deadline = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
-      await githubPut(data, sha, 'Initialize 48-hour attendance deadline');
-    }
+    if (!data.deadline) { data.deadline = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(); await githubPut(data, sha, 'Initialize 48-hour attendance deadline'); }
     return NextResponse.json({ deadline: data.deadline, entries: (data.entries || []).map(normalizeEntry) }, { headers: { 'Cache-Control': 'no-store' } });
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  } catch (error) { return NextResponse.json({ error: error.message }, { status: 500 }); }
 }
 
 export async function POST(req) {
   try {
-    const body = await req.json();
-    const ign = String(body.ign ?? '').trim();
+    const body = await req.json(); const ign = String(body.ign ?? '').trim();
     if (!ign) return NextResponse.json({ error: 'IGN is required.' }, { status: 400 });
-    if (!['attending', 'not_attending'].includes(body.attendance)) return NextResponse.json({ error: 'Select attendance.' }, { status: 400 });
-    if (!['have_pilot', 'no_pilot'].includes(body.pilot)) return NextResponse.json({ error: 'Select pilot status.' }, { status: 400 });
+    if (!['attending','not_attending'].includes(body.attendance)) return NextResponse.json({ error: 'Select attendance.' }, { status: 400 });
+    if (!['have_pilot','no_pilot'].includes(body.pilot)) return NextResponse.json({ error: 'Select pilot status.' }, { status: 400 });
     if (body.pilot === 'have_pilot' && !String(body.pilotName ?? '').trim()) return NextResponse.json({ error: 'Pilot Name is required when you have a pilot.' }, { status: 400 });
-    const { data, sha } = await githubGet();
-    const now = new Date();
+    const { data, sha } = await githubGet(); const now = new Date();
     const deadline = data.deadline || new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
     if (Date.now() > Date.parse(deadline)) return NextResponse.json({ error: 'The response deadline has passed.' }, { status: 403 });
     const entry = normalizeEntry({ ...body, id: crypto.randomUUID(), submittedAt: now.toISOString(), locked: true });
-    data.deadline = deadline;
-    data.entries = [...(data.entries || []), entry];
+    data.deadline = deadline; data.entries = [...(data.entries || []), entry];
     await githubPut(data, sha, `Add FD attendance response: ${ign}`);
     return NextResponse.json({ entry, deadline }, { status: 201 });
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  } catch (error) { return NextResponse.json({ error: error.message }, { status: 500 }); }
 }
 
 export async function PATCH(req) {
   if (!adminOk(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  try {
-    const body = await req.json();
-    const { data, sha } = await githubGet();
-    const index = (data.entries || []).findIndex((x) => String(x.id) === String(body.id));
-    if (index === -1) return NextResponse.json({ error: 'Entry not found.' }, { status: 404 });
-    data.entries[index] = normalizeEntry({ ...data.entries[index], ...body });
-    await githubPut(data, sha, `Admin edit FD attendance: ${data.entries[index].ign}`);
-    return NextResponse.json({ entry: data.entries[index] });
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  try { const body = await req.json(); const { data, sha } = await githubGet(); const index = (data.entries || []).findIndex((x) => String(x.id) === String(body.id)); if (index === -1) return NextResponse.json({ error: 'Entry not found.' }, { status: 404 }); data.entries[index] = normalizeEntry({ ...data.entries[index], ...body }); await githubPut(data, sha, `Admin edit FD attendance: ${data.entries[index].ign}`); return NextResponse.json({ entry: data.entries[index] }); }
+  catch (error) { return NextResponse.json({ error: error.message }, { status: 500 }); }
 }
 
 export async function DELETE(req) {
   if (!adminOk(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  try {
-    const body = await req.json();
-    const { data, sha } = await githubGet();
-    data.entries = (data.entries || []).filter((x) => String(x.id) !== String(body.id));
-    await githubPut(data, sha, 'Admin delete FD attendance response');
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  try { const body = await req.json(); const { data, sha } = await githubGet(); data.entries = (data.entries || []).filter((x) => String(x.id) !== String(body.id)); await githubPut(data, sha, 'Admin delete FD attendance response'); return NextResponse.json({ ok: true }); }
+  catch (error) { return NextResponse.json({ error: error.message }, { status: 500 }); }
 }
