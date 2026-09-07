@@ -14,7 +14,7 @@ function formatCountdown(ms) {
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
   return d > 0
-    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '2')}`
+    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '0')}`
     : `${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '2')}`;
 }
 
@@ -237,51 +237,86 @@ export default function Home() {
               )}
 
               {discordUser && !lockedEntry ? (
-                <form className="form" onSubmit={submit} style={{ position: 'relative', zIndex: 50, pointerEvents: 'auto' }}>
-                  <div className="field" style={{ position: 'relative', zIndex: 55 }}><label style={{ pointerEvents: 'none' }}>IGN <span className="required">*</span></label><input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div>
+                <form className="form" onSubmit={submit}>
+                  <div className="field"><label>IGN <span className="required">*</span></label><input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" /></div>
                   <div className="grid-2"><ChoiceGroup title="Attendance" name="attendance" value={form.attendance} disabled={false} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} /><ChoiceGroup title="Pilot" name="pilot" value={form.pilot} disabled={false} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' No Pilot']]} onChange={(value) => update('pilot', value)} /></div>
-                  <div className="grid-2"><div className="field" style={{ position: 'relative', zIndex: 55 }}><label style={{ pointerEvents: 'none' }}>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label><input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" disabled={form.pilot !== 'have_pilot'} style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div><div className="field" style={{ position: 'relative', zIndex: 55 }}><label style={{ pointerEvents: 'none' }}>Hours</label><input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div></div>
-                  <div className="field" style={{ position: 'relative', zIndex: 55 }}><label style={{ pointerEvents: 'none' }}>Notes <span>(optional)</span></label><textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div>
+                  <div className="grid-2"><div className="field"><label>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label><input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div><div className="field"><label>Hours</label><input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div></div>
+                  <div className="field"><label>Notes <span>(optional)</span></label><textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" /></div>
                   <div className="submit-row"><button className="submit" type="submit" disabled={closed}>SUBMIT RESPONSE</button></div>
                   {message && <div className={`notice ${message.includes('locked') ? 'good' : 'danger'}`}>{message}</div>}
                 </form>
               ) : lockedEntry ? (
                 <div className="form">
                   <div className="notice good"><span className="lock">{ICONS.lock}</span> Your response is locked after submission. This lock is tied to your Discord account.</div>
-                  <div className="entry" style={{ marginTop: 10 }}><div className="entry-top"><div className="entry-ign">{lockedEntry.ign}</div><span className="badge info">SUBMITTED {new Date(lockedEntry.submittedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}</span></div><div className="badge-row"><span className={`badge ${lockedEntry.attendance === 'attending' ? 'good' : 'danger'}`}>{lockedEntry.attendance === 'attending' ? ICONS.yes : ICONS.no} {lockedEntry.attendance === 'attending' ? 'ATTENDING' : 'NOT ATTENDING'}</span><span className="badge info">{lockedEntry.pilot === 'have_pilot' ? ICONS.yes : ICONS.no} {lockedEntry.pilot === 'have_pilot' ? `PILOT: ${lockedEntry.pilotName}` : 'NO PILOT'}</span><span className="badge">HOURS: {lockedEntry.hours || '—'}</span></div>{lockedEntry.notes && <div className="notice" style={{ marginTop: 9 }}>{lockedEntry.notes}</div>}</div>
+                  <div className="entry" style={{ marginTop: 10 }}><div className="entry-top"><div className="entry-ign">{lockedEntry.ign}</div><span className="badge info">SUBMITTED {new Date(lockedEntry.submittedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}</span></div><div className="badge-row"><span className={`badge ${lockedEntry.attendance === 'attending' ? 'good' : 'danger'}`}>{lockedEntry.attendance === 'attending' ? ICONS.yes : ICONS.no} {lockedEntry.attendance === 'attending' ? 'ATTENDING' : 'NOT ATTENDING'}</span><span className="badge info">{lockedEntry.pilot === 'have_pilot' ? ICONS.yes : ICONS.no} {lockedEntry.pilot === 'have_pilot' ? `PILOT: ${lockedEntry.pilotName}` : 'NO PILOT'}</span><span className="badge info">{lockedEntry.hours ? `${lockedEntry.hours} HRS` : 'HOURS: —'}</span></div>{lockedEntry.notes && <div className="entry-notes">{lockedEntry.notes}</div>}</div>
                 </div>
               ) : null}
             </>
           )}
 
-          <section className="admin">
-            <div className="admin-head"><div><h3>ADMIN CONTROLS</h3>{adminAuthed && <div className="admin-sub">{entries.length} RESPONSE{entries.length === 1 ? '' : 'S'}</div>}</div><div className="admin-head-actions">{adminOpen && adminAuthed && <><button className="small-btn export-btn" type="button" disabled={!entries.length} onClick={() => exportCsv(entries)}>EXPORT</button><button className="small-btn danger-btn" type="button" onClick={logoutAdmin}>LOGOUT</button></>}<button className="small-btn" type="button" onClick={() => setAdminOpen((value) => !value)}>{adminOpen ? 'HIDE' : 'OPEN'}</button></div></div>
-            {adminOpen && !adminAuthed && <form className="admin-login" onSubmit={adminLogin}><div className="password-field"><input type={showAdminPassword ? 'text' : 'password'} value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="Admin password" /><button className="password-toggle" type="button" aria-label={showAdminPassword ? 'Hide password' : 'Show password'} onClick={() => setShowAdminPassword((value) => !value)}>{showAdminPassword ? '◉' : '◌'}</button></div><button className="small-btn" type="submit">UNLOCK</button></form>}
-            {adminError && adminOpen && <div className="notice danger">{adminError}</div>}
-            {deleteMessage && <div className="notice good">{deleteMessage}</div>}
-            {adminOpen && adminAuthed && <div style={{ marginTop: 10, position: 'relative', zIndex: 20 }}><AdminResponseForm deadline={deadline} adminPassword={adminPassword} onCreated={(entry, nextDeadline) => { setEntries((old) => [...old, entry]); if (nextDeadline) setDeadline(nextDeadline); }} onResetLocked={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))} /><div className="notice good" style={{ marginTop: 10 }}>Admin-created responses remain <b>UNLOCKED</b>. Respondent submissions remain <b>🔒 LOCKED</b>.</div>{entries.length === 0 ? <div className="notice" style={{ marginTop: 10 }}>No submitted responses yet. Use the admin response form above to add one.</div> : entries.map((entry) => <AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry} />)}</div>}
-          </section>
+          {adminMode && (
+            <section className="admin-panel">
+              <div className="card-heading"><div className="eyebrow">ADMIN CONTROL</div><h2>Final Day Responses</h2><p>Manage attendance responses, add entries manually, export CSV, and remove responses when needed.</p></div>
+              <AdminResponseForm deadline={deadline} adminPassword={adminPassword} onCreated={(entry) => setEntries((old) => [...old, entry])} onResetLocked={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))} />
+              <div className="admin-results">
+                <div className="admin-results-head"><div><div className="eyebrow">RESPONSE LIST</div><h3>{entries.length} RESPONSE{entries.length === 1 ? '' : 'S'}</h3></div><div className="admin-results-actions"><button className="small-btn" type="button" onClick={() => exportCsv(entries)}>EXPORT CSV</button><button className="small-btn" type="button" onClick={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))}>REFRESH</button><button className="small-btn" type="button" onClick={logoutAdmin}>LOGOUT ADMIN</button></div></div>
+                {deleteMessage && <div className={`notice ${deleteMessage.includes('successfully') ? 'good' : 'danger'}`}>{deleteMessage}</div>}
+                <div className="entry-list">
+                  {entries.length === 0 ? <div className="empty-state">No responses yet.</div> : entries.map((entry) => <AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry} />)}
+                </div>
+              </div>
+            </section>
+          )}
         </main>
-
-        <footer className="site-footer"><p>FD Attendance Checker · Philippine Time · Responses lock after submit</p></footer>
       </div>
 
-      {deleteTarget && <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) cancelDelete(); }}><div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title"><div className="eyebrow">ADMIN ACTION</div><h2 id="delete-modal-title">DELETE RESPONSE?</h2><p>Are you sure you want to delete <b>{deleteTarget.ign || 'this response'}</b>? This action cannot be undone.</p>{deleteMessage && <div className="notice danger">{deleteMessage}</div>}<div className="confirm-actions"><button className="small-btn" type="button" disabled={deleteBusy} onClick={cancelDelete}>CANCEL</button><button className="small-btn danger-btn modal-delete-btn" type="button" disabled={deleteBusy} onClick={confirmDelete}>{deleteBusy ? 'DELETING…' : 'DELETE'}</button></div></div></div>}
-      {submitPopup && <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setSubmitPopup(null); }}><div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="submit-modal-title"><div className="eyebrow">RESPONSE SUBMITTED</div><h2 id="submit-modal-title">SUCCESS</h2><div className="notice good">✅ <b>{submitPopup.ign}</b> submitted successfully.</div><p>Your Final Day Attendance response has been recorded and is now <b>🔒 LOCKED</b> to your Discord account.</p><div className="confirm-actions"><button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button></div></div></div>}
+      {submitPopup && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setSubmitPopup(null); }}>
+          <div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="submit-modal-title">
+            <div className="eyebrow">RESPONSE SUBMITTED</div><h2 id="submit-modal-title">SUCCESS</h2><div className="notice good">✅ <b>{submitPopup.ign}</b> was submitted successfully.</div><p>Your response is now <b>🔒 LOCKED</b> to your Discord account.</p><div className="confirm-actions"><button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button></div>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget && !deleteBusy) cancelDelete(); }}>
+          <div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+            <div className="eyebrow">ADMIN ACTION</div><h2 id="delete-modal-title">DELETE RESPONSE?</h2><div className="notice danger">⚠️ <b>{deleteTarget.ign || 'This response'} will be permanently removed.</b></div><p>This action cannot be undone.</p><div className="confirm-actions"><button className="small-btn" type="button" onClick={cancelDelete} disabled={deleteBusy}>CANCEL</button><button className="small-btn danger-btn modal-delete-btn" type="button" onClick={confirmDelete} disabled={deleteBusy}>{deleteBusy ? 'DELETING…' : 'DELETE'}</button></div>{deleteMessage && <div className="notice danger">{deleteMessage}</div>}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function ChoiceGroup({ title, name, value, disabled, options, onChange }) {
-  return <div className="field" style={{ position: 'relative', zIndex: 55 }}><label style={{ pointerEvents: 'none' }}>{title} <span className="required">*</span></label><div className="choices" style={{ position: 'relative', zIndex: 56 }}>{options.map(([valueOption, text], index) => <div className="choice" key={valueOption}><input id={`${name}-${index}`} type="radio" name={name} checked={value === valueOption} onChange={() => onChange(valueOption)} disabled={disabled} /><label htmlFor={`${name}-${index}`} style={{ pointerEvents: 'auto' }}>{text}</label></div>)}</div></div>;
+  return (
+    <div className="field">
+      <label>{title} <span className="required">*</span></label>
+      <div className="choices">
+        {options.map(([valueOption, text], index) => <div className="choice" key={valueOption}><input id={`${name}-${index}`} type="radio" name={name} checked={value === valueOption} onChange={() => onChange(valueOption)} disabled={disabled} /><label htmlFor={`${name}-${index}`}>{text}</label></div>)}
+      </div>
+    </div>
+  );
 }
 
 function AdminEntry({ entry, onSave, onDelete }) {
-  const [draft, setDraft] = useState(entry);
+  const [draft, setDraft] = useState({ ...entry });
   const [saving, setSaving] = useState(false);
-  const [status, setStatus] = useState('');
-  useEffect(() => setDraft(entry), [entry]);
-  const patch = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
-  const save = async () => { setSaving(true); setStatus(''); try { await onSave(draft); setStatus('Saved'); } catch (error) { setStatus(error.message); } finally { setSaving(false); } };
-  return <div className="entry"><div className="entry-top"><div className="entry-ign">{entry.ign || 'Unnamed response'}</div><div className="badge-row"><span className={`badge ${entry.locked ? 'info' : 'good'}`}>{entry.locked ? '🔒 LOCKED' : 'UNLOCKED'}</span><span className="badge info">SUBMITTED {entry.submittedAt ? new Date(entry.submittedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' }) : '—'}</span></div></div><div className="entry-fields"><div className="field"><label>IGN</label><input value={draft.ign} onChange={(e) => patch('ign', e.target.value)} placeholder="IGN" disabled={saving} /></div><div className="field"><label>Attendance</label><select value={draft.attendance} onChange={(e) => patch('attendance', e.target.value)} disabled={saving}><option value="attending">✅ Attending</option><option value="not_attending">❌ Not Attending</option></select></div><div className="field"><label>Pilot</label><select value={draft.pilot} onChange={(e) => patch('pilot', e.target.value)} disabled={saving}><option value="have_pilot">✅ Have Pilot</option><option value="no_pilot">❌ No Pilot</option></select></div><div className="field"><label>Pilot Name</label><input value={draft.pilotName} onChange={(e) => patch('pilotName', e.target.value)} placeholder="Pilot name" disabled={saving} /></div><div className="field"><label>Hours</label><input value={draft.hours} onChange={(e) => patch('hours', e.target.value)} placeholder="Hours" disabled={saving} /></div><div className="field admin-notes-field"><label>Notes</label><textarea value={draft.notes} onChange={(e) => patch('notes', e.target.value)} placeholder="Notes" disabled={saving} /></div></div><div className="admin-actions"><button className="small-btn" type="button" disabled={saving} onClick={save}>{saving ? 'SAVING…' : 'SAVE'}</button><button className="small-btn danger-btn" type="button" disabled={saving} onClick={() => onDelete(entry.id)}>DELETE</button>{status && <span className={`badge ${status === 'Saved' ? 'good' : 'danger'}`}>{status}</span>}</div></div>;
+  const update = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
+  const handleSave = async () => { setSaving(true); try { await onSave(draft); } finally { setSaving(false); } };
+  return (
+    <div className="entry admin-entry">
+      <div className="entry-top"><div className="entry-ign">{entry.ign}</div><span className={`badge ${entry.locked ? 'danger' : 'good'}`}>{entry.locked ? 'LOCKED' : 'UNLOCKED'}</span></div>
+      <div className="entry-fields">
+        <input value={draft.ign} onChange={(e) => update('ign', e.target.value)} placeholder="IGN" />
+        <select value={draft.attendance} onChange={(e) => update('attendance', e.target.value)}><option value="attending">✅ ATTENDING</option><option value="not_attending">❌ NOT ATTENDING</option></select>
+        <select value={draft.pilot} onChange={(e) => update('pilot', e.target.value)}><option value="have_pilot">✅ HAVE PILOT</option><option value="no_pilot">❌ NO PILOT</option></select>
+        <input value={draft.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" />
+        <input value={draft.hours} onChange={(e) => update('hours', e.target.value)} placeholder="Hours" />
+        <textarea value={draft.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Notes" />
+      </div>
+      <div className="admin-entry-actions"><button className="small-btn" type="button" onClick={handleSave} disabled={saving}>{saving ? 'SAVING…' : 'SAVE'}</button><button className="small-btn danger-btn" type="button" onClick={() => onDelete(entry.id)}>DELETE</button></div>
+    </div>
+  );
 }
