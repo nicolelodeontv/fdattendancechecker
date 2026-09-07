@@ -214,7 +214,7 @@ export default function Home() {
 
               <div className="deadline"><div className="deadline-copy">{ICONS.hourglass} <b>Response deadline:</b> 48 hours from the start of this response period.</div><div className="deadline-time">{closed ? 'DEADLINE PASSED' : formatCountdown(remaining ?? 0)}</div></div>
 
-              {!discordLoading && !discordUser && !lockedEntry && (
+              {!discordUser && !lockedEntry && (
                 <div className="form">
                   <div className="card-heading" style={{ padding: '0 0 8px' }}><div className="eyebrow">RESPONDER LOGIN</div><h2>Login with Discord</h2><p>Sign in with Discord before submitting your Final Day Attendance. Your response will be securely linked to your Discord account.</p></div>
                   <div className="submit-row"><a className="submit" href="/api/auth/discord/login">LOGIN WITH DISCORD</a></div>
@@ -237,8 +237,6 @@ export default function Home() {
                   <div className="submit-row"><button className="submit" type="submit" disabled={closed || loading}>SUBMIT RESPONSE</button></div>
                   {message && <div className={`notice ${message.includes('locked') ? 'good' : 'danger'}`}>{message}</div>}
                 </form>
-              ) : !discordUser && !lockedEntry ? (
-                !discordLoading ? null : <div className="notice">Checking Discord login…</div>
               ) : lockedEntry ? (
                 <div className="form">
                   <div className="notice good"><span className="lock">{ICONS.lock}</span> Your response is locked after submission. This lock is tied to your Discord account.</div>
