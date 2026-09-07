@@ -241,7 +241,7 @@ export default function Home() {
               {discordUser && !lockedEntry ? (
                 <form className="form" onSubmit={submit}>
                   <div className="field"><label>IGN <span className="required">*</span></label><input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" /></div>
-                  <div className="grid-2"><ChoiceGroup title="Attendance" name="attendance" value={form.attendance} disabled={false} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} /><ChoiceGroup title="Pilot" name="pilot" value={form.pilot} disabled={false} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' No Pilot']]} onChange={(value) => update('pilot', value)} /></div>
+                  <div className="grid-2"><ChoiceGroup title="Attendance" name="attendance" value={form.attendance} disabled={false} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} /><ChoiceGroup title="Pilot" name="pilot" value={form.pilot} disabled={false} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' Not Attending']]} onChange={(value) => update('pilot', value)} /></div>
                   <div className="grid-2"><div className="field"><label>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label><input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div><div className="field"><label>Hours</label><input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div></div>
                   <div className="field"><label>Notes <span>(optional)</span></label><textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" /></div>
                   <div className="submit-row"><button className="submit" type="submit" disabled={closed}>SUBMIT RESPONSE</button></div>
@@ -254,6 +254,32 @@ export default function Home() {
                 </div>
               ) : null}
             </>
+          )}
+
+          {!adminMode && (
+            <section className="admin" aria-label="Admin Controls">
+              <div className="admin-head">
+                <div>
+                  <h3>ADMIN CONTROLS</h3>
+                  <div className="admin-sub">AUTHORIZED ADMIN ACCESS</div>
+                </div>
+                <div className="admin-head-actions">
+                  <button className="small-btn" type="button" onClick={() => { setAdminOpen((open) => !open); setAdminError(''); }}>
+                    {adminOpen ? 'HIDE' : 'OPEN'}
+                  </button>
+                </div>
+              </div>
+              {adminOpen && !adminAuthed && (
+                <form className="admin-login" onSubmit={adminLogin}>
+                  <div className="password-field">
+                    <input type={showAdminPassword ? 'text' : 'password'} value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="Admin password" autoComplete="current-password" />
+                    <button className="password-toggle" type="button" aria-label={showAdminPassword ? 'Hide password' : 'Show password'} onClick={() => setShowAdminPassword((show) => !show)}>{showAdminPassword ? 'H' : 'S'}</button>
+                  </div>
+                  <button className="small-btn" type="submit">UNLOCK</button>
+                </form>
+              )}
+              {adminError && adminOpen && <div className="notice danger">{adminError}</div>}
+            </section>
           )}
 
           {adminMode && (
