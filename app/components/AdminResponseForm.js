@@ -17,12 +17,28 @@ function formatCountdown(ms) {
     : `${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '2')}`;
 }
 
+function manilaInputValue(iso) {
+  if (!iso) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(new Date(iso));
+  const values = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+  return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}`;
+}
+
+function manilaInputToIso(value) {
+  if (!value) return '';
+  return new Date(`${value}:00+08:00`).toISOString();
+}
+
 export default function AdminResponseForm({ deadline, adminPassword, onCreated, onResetLocked }) {
   const [form, setForm] = useState(EMPTY);
   const [now, setNow] = useState(Date.now());
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [deadlineValue, setDeadlineValue] = useState(() => manilaInputValue(deadline));
+  const [savingDeadline, setSavingDeadline] = useState(false);
   const [submitPopup, setSubmitPopup] = useState(null);
   const [resetPopup, setResetPopup] = useState(null);
   const [lockedEntries, setLockedEntries] = useState([]);
@@ -32,6 +48,10 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    setDeadlineValue(manilaInputValue(deadline));
+  }, [deadline]);
 
   useEffect(() => {
     loadLockedEntries();
@@ -52,6 +72,33 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
       if (!res.ok) return;
       setLockedEntries((data.entries || []).filter((entry) => entry.locked));
     } catch {}
+  }
+
+  async function saveDeadline(event) {
+    event.preventDefault();
+    setMessage('');
+    const iso = manilaInputToIso(deadlineValue);
+    if (!iso) {
+      setMessage('Please select a response deadline.');
+      return;
+    }
+    setSavingDeadline(true);
+    try {
+      const res = await fetch('/api/attendance?admin=1', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+        body: JSON.stringify({ action: 'set_deadline', deadline: iso }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not save the response deadline.');
+      setMessage('Response deadline updated successfully.');
+      setDeadlineValue(manilaInputValue(data.deadline));
+      window.location.reload();
+    } catch (error) {
+      setMessage(error.message);
+    } finally {
+      setSavingDeadline(false);
+    }
   }
 
   async function submit(event) {
@@ -136,11 +183,22 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
       </div>
 
       <div className="deadline">
-        <div className="deadline-copy">{ICONS.hourglass} <b>Response deadline:</b> 48 hours from the start of this response period.</div>
+        <div className="deadline-copy">{ICONS.hourglass} <b>Response deadline:</b> Manually configured by admin.</div>
         <div className="deadline-time">{closed ? 'DEADLINE PASSED' : formatCountdown(remaining)}</div>
       </div>
 
       <form className="form" onSubmit={submit} style={{ position: 'relative', zIndex: 50, pointerEvents: 'auto' }}>
+        <div className="admin-deadline-control">
+          <div>
+            <label className="admin-reset-label" htmlFor="admin-response-deadline">SET RESPONSE DEADLINE</label>
+            <div className="admin-deadline-help">Philippine Time · Asia/Manila (UTC+8)</div>
+          </div>
+          <div className="admin-deadline-row">
+            <input id="admin-response-deadline" className="admin-deadline-input" type="datetime-local" value={deadlineValue} onChange={(e) => setDeadlineValue(e.target.value)} disabled={savingDeadline || saving || resetting} />
+            <button className="small-btn" type="button" onClick={saveDeadline} disabled={savingDeadline || saving || resetting || !deadlineValue}>{savingDeadline ? 'SAVING…' : 'SAVE DEADLINE'}</button>
+          </div>
+        </div>
+
         <div className="field" style={fieldStyle}>
           <label style={{ pointerEvents: 'none' }}>IGN <span className="required">*</span></label>
           <input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" disabled={saving} style={fieldStyle} />
@@ -183,7 +241,7 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
           <button className="small-btn reset-locked-btn reset-all-btn" type="button" onClick={requestResetAll} disabled={saving || resetting}>{resetting ? 'RESETTING…' : 'RESET ALL LOCKED RESPONSES'}</button>
         </div>
 
-        {message && <div className={`notice ${message.includes('successfully') || message.includes('Reset complete') || message.includes('has been reset') ? 'good' : 'danger'}`}>{message}</div>}
+        {message && <div className={`notice ${message.includes('successfully') || message.includes('Reset complete') || message.includes('has been reset') || message.includes('deadline updated') ? 'good' : 'danger'}`}>{message}</div>}
       </form>
 
       {submitPopup && (
