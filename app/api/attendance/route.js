@@ -93,6 +93,13 @@ function adminOk(req) {
   return !!expected && req.headers.get('x-admin-password') === expected;
 }
 
+function normalizeHours(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+  const numeric = Number.parseFloat(raw.replace(/\s*(?:hours?|hrs?)\s*$/i, '').trim());
+  return Number.isFinite(numeric) ? String(numeric) : raw.replace(/\s*(?:hours?|hrs?)\s*$/i, '').trim();
+}
+
 function normalizeEntry(entry) {
   return {
     id: String(entry.id),
@@ -100,7 +107,7 @@ function normalizeEntry(entry) {
     attendance: entry.attendance === 'not_attending' ? 'not_attending' : 'attending',
     pilot: entry.pilot === 'no_pilot' ? 'no_pilot' : 'have_pilot',
     pilotName: String(entry.pilotName ?? '').trim(),
-    hours: String(entry.hours ?? '').trim(),
+    hours: normalizeHours(entry.hours),
     notes: String(entry.notes ?? '').trim(),
     submittedAt: entry.submittedAt,
     locked: entry.locked !== false,
