@@ -17,7 +17,15 @@ export async function GET(req){try{const isAdmin=new URL(req.url).searchParams.g
   if(!isAdmin){const discord=await discordUser(req);const entry=discord?.discordId?(data.entries||[]).map(normalizeEntry).find(x=>x.discordId===String(discord.discordId)):null;return NextResponse.json({deadline:data.deadline,entry:entry||null},{headers:{'Cache-Control':'no-store'}});}
   return NextResponse.json({deadline:data.deadline,entries:(data.entries||[]).map(normalizeEntry)},{headers:{'Cache-Control':'no-store'}});
 }catch(error){return NextResponse.json({error:error.message},{status:500});}}
-export async function POST(req){try{const url=new URL(req.url);const isAdmin=url.searchParams.get('admin')==='1';if(isAdmin&&!adminOk(req))return NextResponse.json({error:'Unauthorized'});const body=await req.json();
+export async function POST(req){try{const url=new URL(req.url);const isAdmin=url.searchParams.get('admin')==='1';if(isAdmin&&!adminOk(req))return NextResponse.json({error:'Unauthorized'},{status:401});const body=await req.json();
+  if(isAdmin&&body?.action==='set_deadline'){
+    const deadline=String(body.deadline||'');
+    if(!deadline||Number.isNaN(Date.parse(deadline)))return NextResponse.json({error:'A valid response deadline is required.'},{status:400});
+    const{data,sha}=await githubGet();
+    data.deadline=new Date(deadline).toISOString();
+    await githubPut(data,sha,`Admin set FD attendance deadline: ${data.deadline}`);
+    return NextResponse.json({ok:true,deadline:data.deadline});
+  }
   if(isAdmin&&body?.action==='reset_locked'){
     const{data,sha}=await githubGet();
     const entries=data.entries||[];
