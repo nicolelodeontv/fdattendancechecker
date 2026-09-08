@@ -138,15 +138,10 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Submission failed.');
 
-      // The POST endpoint clears the responder's Discord session atomically
-      // after the response is successfully saved. Clear only responder UI state
-      // here; admin authentication is kept completely separate.
-      localStorage.removeItem('fd_attendance_entry');
-      setDiscordUser(null);
-      setLockedEntry(null);
-      setForm(EMPTY);
+      // Submission does not log the responder out. Discord stays connected
+      // until the responder explicitly uses the manual Logout button.
       setDeadline(data.deadline);
-      setMessage('Response submitted successfully. You have been logged out of Discord.');
+      setMessage('Response submitted successfully. Your Discord session remains active until you log out.');
       setSubmitPopup({ ign: data.entry?.ign || form.ign.trim() });
     } catch (error) { setMessage(error.message); }
   }
@@ -278,7 +273,7 @@ export default function Home() {
       {submitPopup && (
         <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setSubmitPopup(null); }}>
           <div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="submit-modal-title">
-            <div className="eyebrow">RESPONSE SUBMITTED</div><h2 id="submit-modal-title">SUCCESS</h2><div className="notice good">✅ <b>{submitPopup.ign}</b> was submitted successfully.</div><p>Your response is now <b>🔒 LOCKED</b> and you have been <b>logged out of Discord</b>.</p><div className="confirm-actions"><button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button></div>
+            <div className="eyebrow">RESPONSE SUBMITTED</div><h2 id="submit-modal-title">SUCCESS</h2><div className="notice good">✅ <b>{submitPopup.ign}</b> was submitted successfully.</div><p>Your response is now <b>🔒 LOCKED</b>. Your Discord session remains active until you choose <b>LOGOUT</b>.</p><div className="confirm-actions"><button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button></div>
           </div>
         </div>
       )}
