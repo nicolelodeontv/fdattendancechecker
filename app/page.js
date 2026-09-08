@@ -54,6 +54,7 @@ export default function Home() {
   const [lockedEntry, setLockedEntry] = useState(null);
   const [deadline, setDeadline] = useState(null);
   const [entries, setEntries] = useState([]);
+  const [attendingRankings, setAttendingRankings] = useState([]);
   const [now, setNow] = useState(Date.now());
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -77,6 +78,7 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Unable to load tracker.');
       setDeadline(data.deadline);
+      setAttendingRankings(data.attendingRankings || []);
       if (data.entry) {
         setLockedEntry(data.entry);
         setForm({ ign: data.entry.ign, attendance: data.entry.attendance, pilot: data.entry.pilot, pilotName: data.entry.pilotName, hours: data.entry.hours, notes: data.entry.notes });
@@ -96,6 +98,7 @@ export default function Home() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Unable to refresh responses.');
     setEntries(data.entries || []);
+    setAttendingRankings(data.attendingRankings || []);
     if (data.deadline) setDeadline(data.deadline);
     return data;
   }
@@ -138,16 +141,14 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Submission failed.');
 
-      // The POST endpoint clears the responder's Discord session atomically
-      // after the response is successfully saved. Clear only responder UI state
-      // here; admin authentication is kept completely separate.
-      localStorage.removeItem('fd_attendance_entry');
-      setDiscordUser(null);
-      setLockedEntry(null);
-      setForm(EMPTY);
+      const submittedEntry = data.entry;
+      setLockedEntry(submittedEntry);
+      setForm({ ign: submittedEntry.ign, attendance: submittedEntry.attendance, pilot: submittedEntry.pilot, pilotName: submittedEntry.pilotName, hours: submittedEntry.hours, notes: submittedEntry.notes });
+      localStorage.setItem('fd_attendance_entry', JSON.stringify(submittedEntry));
+      setAttendingRankings(data.attendingRankings || []);
       setDeadline(data.deadline);
-      setMessage('Response submitted successfully. You have been logged out of Discord.');
-      setSubmitPopup({ ign: data.entry?.ign || form.ign.trim() });
+      setMessage('Response submitted successfully. You remain logged in to Discord.');
+      setSubmitPopup({ ign: submittedEntry.ign });
     } catch (error) { setMessage(error.message); }
   }
 
@@ -164,7 +165,7 @@ export default function Home() {
       const data = await res.json();
       if (res.status === 401) throw new Error('Incorrect admin password.');
       if (!res.ok) throw new Error(data.error || 'Admin login failed.');
-      setEntries(data.entries || []); setDeadline(data.deadline); setAdminAuthed(true); setAdminOpen(true); sessionStorage.setItem('fd_admin', adminPassword);
+      setEntries(data.entries || []); setAttendingRankings(data.attendingRankings || []); setDeadline(data.deadline); setAdminAuthed(true); setAdminOpen(true); sessionStorage.setItem('fd_admin', adminPassword);
     } catch (error) { setAdminError(error.message); }
   }
 
@@ -180,6 +181,7 @@ export default function Home() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Could not save.');
     setEntries((old) => old.map((x) => (x.id === entry.id ? data.entry : x)));
+    setAttendingRankings(data.attendingRankings || []);
   }
 
   function deleteEntry(id) {
@@ -195,7 +197,9 @@ export default function Home() {
       const res = await fetch('/api/attendance', { method: 'DELETE', headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword }, body: JSON.stringify({ id: deleteTarget.id }) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Could not delete.');
-      setEntries((old) => old.filter((x) => x.id !== deleteTarget.id)); setDeleteTarget(null); setDeleteMessage('Response deleted successfully.');
+      setEntries((old) => old.filter((x) => x.id !== deleteTarget.id));
+      setAttendingRankings(data.attendingRankings || []);
+      setDeleteTarget(null); setDeleteMessage('Response deleted successfully.');
     } catch (error) { setDeleteMessage(error.message); }
     finally { setDeleteBusy(false); }
   }
@@ -262,13 +266,28 @@ export default function Home() {
               ) : lockedEntry ? (
                 <div className="form"><div className="notice good"><span className="lock">{ICONS.lock}</span> Your response is locked after submission. This lock is tied to your Discord account.</div><div className="entry" style={{ marginTop: 10 }}><div className="entry-top"><div className="entry-ign">{lockedEntry.ign}</div><span className="badge info">SUBMITTED {new Date(lockedEntry.submittedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}</span></div><div className="badge-row"><span className={`badge ${lockedEntry.attendance === 'attending' ? 'good' : 'danger'}`}>{lockedEntry.attendance === 'attending' ? ICONS.yes : ICONS.no} {lockedEntry.attendance === 'attending' ? 'ATTENDING' : 'NOT ATTENDING'}</span><span className="badge info">{lockedEntry.pilot === 'have_pilot' ? ICONS.yes : ICONS.no} {lockedEntry.pilot === 'have_pilot' ? `PILOT: ${lockedEntry.pilotName}` : 'NO PILOT'}</span><span className="badge info">{lockedEntry.hours ? `${lockedEntry.hours} HRS` : 'HOURS: —'}</span></div>{lockedEntry.notes && <div className="entry-notes">{lockedEntry.notes}</div>}</div></div>
               ) : null}
+
+              {attendingRankings.length > 0 && (
+                <section className="rankings-panel" aria-labelledby="attending-rankings-title">
+                  <div className="card-heading ranking-heading"><div className="eyebrow">LIVE RANKING</div><h2 id="attending-rankings-title">Attending Rankings</h2><p>Members who selected <b>Attending</b>, ranked by available hours.</p></div>
+                  <div className="ranking-list">
+                    {attendingRankings.map((item) => (
+                      <div className="ranking-item" key={`${item.rank}-${item.ign}`}>
+                        <span className="ranking-position">#{item.rank}</span>
+                        <span className="ranking-ign">{item.ign}</span>
+                        <span className="ranking-hours">{item.hours ? `${item.hours} HRS` : 'HOURS: —'}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
             </>
           )}
 
           {adminMode && (
             <section className="admin-panel">
               <div className="card-heading"><div className="eyebrow">ADMIN CONTROL</div><h2>Final Day Responses</h2><p>Manage attendance responses, add entries manually, export CSV, and remove responses when needed.</p></div>
-              <AdminResponseForm deadline={deadline} adminPassword={adminPassword} onCreated={(entry) => setEntries((old) => [...old, entry])} onResetLocked={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))} />
+              <AdminResponseForm deadline={deadline} adminPassword={adminPassword} onCreated={(entry) => { setEntries((old) => [...old, entry]); setAttendingRankings((old) => [...old, ...(entry.attendance === 'attending' ? [{ rank: old.length + 1, ign: entry.ign, hours: entry.hours }] : [])]); }} onResetLocked={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))} />
               <div className="admin-results"><div className="admin-results-head"><div><div className="eyebrow">RESPONSE LIST</div><h3>{entries.length} RESPONSE{entries.length === 1 ? '' : 'S'}</h3></div><div className="admin-results-actions"><button className="small-btn" type="button" onClick={() => exportCsv(entries)}>EXPORT CSV</button><button className="small-btn" type="button" onClick={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))}>REFRESH</button></div></div>{deleteMessage && <div className={`notice ${deleteMessage.includes('successfully') ? 'good' : 'danger'}`}>{deleteMessage}</div>}<div className="entry-list">{entries.length === 0 ? <div className="empty-state">No responses yet.</div> : entries.map((entry) => <AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry} />)}</div></div>
             </section>
           )}
@@ -278,7 +297,7 @@ export default function Home() {
       {submitPopup && (
         <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setSubmitPopup(null); }}>
           <div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="submit-modal-title">
-            <div className="eyebrow">RESPONSE SUBMITTED</div><h2 id="submit-modal-title">SUCCESS</h2><div className="notice good">✅ <b>{submitPopup.ign}</b> was submitted successfully.</div><p>Your response is now <b>🔒 LOCKED</b> and you have been <b>logged out of Discord</b>.</p><div className="confirm-actions"><button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button></div>
+            <div className="eyebrow">RESPONSE SUBMITTED</div><h2 id="submit-modal-title">SUCCESS</h2><div className="notice good">✅ <b>{submitPopup.ign}</b> was submitted successfully.</div><p>Your response is now <b>🔒 LOCKED</b> and you are still <b>logged in to Discord</b>.</p><div className="confirm-actions"><button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button></div>
           </div>
         </div>
       )}
@@ -303,5 +322,5 @@ function AdminEntry({ entry, onSave, onDelete }) {
   const [saving, setSaving] = useState(false);
   const update = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
   const handleSave = async () => { setSaving(true); try { await onSave(draft); } finally { setSaving(false); } };
-  return <div className="entry admin-entry"><div className="entry-top"><div><div className="entry-ign">{entry.ign}</div><div className="admin-discord-account">DISCORD: <b>{entry.discordUsername || 'ADMIN CREATED'}</b>{entry.discordId && <span className="admin-discord-id"> · ID {entry.discordId}</span>}</div></div><span className={`badge ${entry.locked ? 'danger' : 'good'}`}>{entry.locked ? 'LOCKED' : 'UNLOCKED'}</span></div><div className="entry-fields"><input value={draft.ign} onChange={(e) => update('ign', e.target.value)} placeholder="IGN" /><select value={draft.attendance} onChange={(e) => update('attendance', e.target.value)}><option value="attending">✅ ATTENDING</option><option value="not_attending">❌ NOT ATTENDING</option></select><select value={draft.pilot} onChange={(e) => update('pilot', e.target.value)}><option value="have_pilot">✅ HAVE PILOT</option><option value="no_pilot">❌ NO PILOT</option></select><input value={draft.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" /><input value={draft.hours} onChange={(e) => update('hours', e.target.value)} placeholder="Hours" /><textarea value={draft.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Notes" /></div><div className="admin-entry-actions"><button className="small-btn" type="button" onClick={handleSave} disabled={saving}>{saving ? 'SAVING…' : 'SAVE'}</button><button className="small-btn danger-btn" type="button" onClick={() => onDelete(entry.id)}>DELETE</button></div></div>;
+  return <div className="entry admin-entry"><div className="entry-top"><div><div className="entry-ign">{entry.ign}</div><div className="admin-discord-account">DISCORD: <b>{entry.discordUsername || 'ADMIN CREATED'}</b>{entry.discordId && <span className="admin-discord-id"> · ID {entry.discordId}</span>}</div></div><span className={`badge ${entry.locked ? 'danger' : 'good'}`}>{entry.locked ? 'LOCKED' : 'UNLOCKED'}</span></div><div className="entry-fields"><input value={draft.ign} onChange={(e) => update('ign', e.target.value)} placeholder="IGN" /><select value={draft.attendance} onChange={(e) => update('attendance', e.target.value)}><option value="attending">✅ ATTENDING</option><option value="not_attending">❌ NOT ATTENDING</option></select><select value={draft.pilot} onChange={(e) => update('pilot', e.target.value)}><option value="have_pilot">✅ HAVE PILOT</option><option value="no_pilot">✅ NO PILOT</option></select><input value={draft.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" /><input value={draft.hours} onChange={(e) => update('hours', e.target.value)} placeholder="Hours" /><textarea value={draft.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Notes" /></div><div className="admin-entry-actions"><button className="small-btn" type="button" onClick={handleSave} disabled={saving}>{saving ? 'SAVING…' : 'SAVE'}</button><button className="small-btn danger-btn" type="button" onClick={() => onDelete(entry.id)}>DELETE</button></div></div>;
 }
