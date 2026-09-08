@@ -33,7 +33,7 @@ function manilaInputToIso(value) {
 
 export default function AdminResponseForm({ deadline, adminPassword, onCreated, onResetLocked }) {
   const [form, setForm] = useState(EMPTY);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(0);
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);

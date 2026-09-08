@@ -19,20 +19,26 @@ function formatCountdown(ms) {
 }
 
 function useLocalClock() {
-  const [now, setNow] = useState(Date.now());
-  const [timeZone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local');
+  const [now, setNow] = useState(0);
+  const [timeZone, setTimeZone] = useState('UTC');
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
+    setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local');
+    setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
+
   const formatter = useMemo(() => new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium', timeStyle: 'medium', timeZone,
   }), [timeZone]);
   const zoneFormatter = useMemo(() => new Intl.DateTimeFormat(undefined, {
     timeZone, timeZoneName: 'shortOffset', hour: '2-digit', minute: '2-digit',
   }), [timeZone]);
-  const offset = zoneFormatter.formatToParts(now).find((part) => part.type === 'timeZoneName')?.value || 'Local time';
-  return { text: formatter.format(now), timeZone, offset };
+  const offset = zoneFormatter.formatToParts(now).find((part) => part.type === 'timeZoneName')?.value || 'UTC';
+  return { text: mounted ? formatter.format(now) : '—', timeZone: mounted ? timeZone : 'UTC', offset: mounted ? offset : 'UTC' };
 }
 
 function escapeCsv(value) {
@@ -67,7 +73,7 @@ export default function Home() {
   const [lockedEntry, setLockedEntry] = useState(null);
   const [deadline, setDeadline] = useState(null);
   const [entries, setEntries] = useState([]);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState(0);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [discordUser, setDiscordUser] = useState(null);
