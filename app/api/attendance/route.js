@@ -11,12 +11,22 @@ async function githubGet() {
   if (!token) throw new Error('GITHUB_TOKEN is not configured');
   const res = await fetch(ISSUE_API, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${token.trim()}`,
       Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
     },
     cache: 'no-store',
   });
-  if (!res.ok) throw new Error(`GitHub data store GET failed: ${res.status}`);
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const payload = await res.json();
+      detail = String(payload?.message || '').trim();
+    } catch {}
+    console.error('GitHub datastore GET rejected', { status: res.status, detail });
+    const suffix = detail ? `: ${detail}` : '';
+    throw new Error(`GitHub data store GET failed: ${res.status}${suffix}`);
+  }
   const json = await res.json();
   const body = String(json.body || '');
   const raw = body.startsWith(STORE_MARKER) ? body.slice(STORE_MARKER.length).trim() : body.trim();
@@ -35,13 +45,23 @@ async function githubPut(data, message) {
   const res = await fetch(ISSUE_API, {
     method: 'PATCH',
     headers: {
-      Authorization: `Bearer ${token}`,
+      Authorization: `Bearer ${token.trim()}`,
       Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ body }),
   });
-  if (!res.ok) throw new Error(`GitHub data store update failed: ${res.status}`);
+  if (!res.ok) {
+    let detail = '';
+    try {
+      const payload = await res.json();
+      detail = String(payload?.message || '').trim();
+    } catch {}
+    console.error('GitHub datastore update rejected', { status: res.status, detail, message });
+    const suffix = detail ? `: ${detail}` : '';
+    throw new Error(`GitHub data store update failed: ${res.status}${suffix}`);
+  }
   return res.json();
 }
 
@@ -179,7 +199,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Select attendance.' }, { status: 400 });
     }
     if (!['have_pilot', 'no_pilot'].includes(body.pilot)) {
-      return NextResponse.json({ error: 'Select pilot status.' }, { status: 400 });
+      return NextResponse.json({ error: 'Select pilot.' }, { status: 400 });
     }
     if (body.pilot === 'have_pilot' && !String(body.pilotName ?? '').trim()) {
       return NextResponse.json({ error: 'Pilot Name is required when you have a pilot.' }, { status: 400 });
