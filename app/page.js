@@ -242,53 +242,71 @@ export default function Home() {
               <div className="card-heading"><div className="eyebrow">RESPONSE FORM</div><h2>Final Day Attendance</h2><p>Complete your attendance, pilot, and availability details. Your response is tied to your Discord account and locked after submission.</p></div>
               <div className="deadline"><div className="deadline-copy">{ICONS.hourglass} <b>Response deadline:</b> 48 hours from the start of this response period.</div><div className="deadline-time">{closed ? 'DEADLINE PASSED' : formatCountdown(remaining ?? 0)}</div></div>
 
-              {!discordUser && !lockedEntry && (
-                <div className="form">
-                  <div className="card-heading" style={{ padding: '0 0 8px' }}><div className="eyebrow">RESPONDER LOGIN</div><h2>Login with Discord</h2><p>Sign in with Discord before submitting your Final Day Attendance. Your response will be securely linked to your Discord account.</p></div>
-                  <div className="submit-row"><a className="submit" href="/api/auth/discord/login">LOGIN WITH DISCORD</a></div>
-                  {discordError && <div className="notice danger" style={{ marginTop: 10 }}>{discordError}</div>}
+              <div className="responder-layout">
+                <div className="responder-main">
+                  {!discordUser && !lockedEntry && (
+                    <div className="form">
+                      <div className="card-heading" style={{ padding: '0 0 8px' }}><div className="eyebrow">RESPONDER LOGIN</div><h2>Login with Discord</h2><p>Sign in with Discord before submitting your Final Day Attendance. Your response will be securely linked to your Discord account.</p></div>
+                      <div className="submit-row"><a className="submit" href="/api/auth/discord/login">LOGIN WITH DISCORD</a></div>
+                      {discordError && <div className="notice danger" style={{ marginTop: 10 }}>{discordError}</div>}
+                    </div>
+                  )}
+
+                  {discordUser && !lockedEntry && (
+                    <form className="form" onSubmit={submit}>
+                      <div className="notice good"><b>DISCORD:</b> {discordUser.username || 'Authenticated'}</div>
+                      <div className="field"><label>IGN <span className="required">*</span></label><input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" /></div>
+                      <div className="grid-2"><ChoiceGroup title="Attendance" name="attendance" value={form.attendance} disabled={false} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} /><ChoiceGroup title="Pilot" name="pilot" value={form.pilot} disabled={false} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' Not Attending']]} onChange={(value) => update('pilot', value)} /></div>
+                      <div className="grid-2"><div className="field"><label>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label><input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" /></div><div className="field"><label>Hours</label><input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" /></div></div>
+                      <div className="field"><label>Notes <span>(optional)</span></label><textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" /></div>
+                      <div className="submit-row"><button className="submit" type="submit" disabled={closed}>SUBMIT RESPONSE</button></div>
+                      {message && <div className={`notice ${message.includes('submitted successfully') ? 'good' : 'danger'}`}>{message}</div>}
+                      <div className="submit-row response-logout-row"><button type="button" className="small-btn" onClick={logoutDiscord}>DISCORD LOGOUT</button></div>
+                    </form>
+                  )}
+
+                  {lockedEntry && (
+                    <div className="form">
+                      <div className="notice good"><span className="lock">{ICONS.lock}</span> Your response is locked after submission. This lock is tied to your Discord account.</div>
+                      <div className="entry" style={{ marginTop: 10 }}><div className="entry-top"><div className="entry-ign">{lockedEntry.ign}</div><span className="badge info">SUBMITTED {new Date(lockedEntry.submittedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}</span></div><div className="badge-row"><span className={`badge ${lockedEntry.attendance === 'attending' ? 'good' : 'danger'}`}>{lockedEntry.attendance === 'attending' ? ICONS.yes : ICONS.no} {lockedEntry.attendance === 'attending' ? 'ATTENDING' : 'NOT ATTENDING'}</span><span className="badge info">{lockedEntry.pilot === 'have_pilot' ? ICONS.yes : ICONS.no} {lockedEntry.pilot === 'have_pilot' ? `PILOT: ${lockedEntry.pilotName}` : 'NO PILOT'}</span><span className="badge info">{lockedEntry.hours ? `${lockedEntry.hours} HRS` : 'HOURS: —'}</span></div>{lockedEntry.notes && <div className="entry-notes">{lockedEntry.notes}</div>}</div>
+                      <div className="submit-row response-logout-row"><button type="button" className="small-btn" onClick={logoutDiscord}>DISCORD LOGOUT</button></div>
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {discordUser && !lockedEntry && (
-                <div className="form"><div className="notice good"><b>DISCORD:</b> {discordUser.username || 'Authenticated'} <button type="button" className="small-btn" style={{ float: 'right', marginTop: -4 }} onClick={logoutDiscord}>LOGOUT</button></div></div>
-              )}
-
-              {discordUser && !lockedEntry ? (
-                <form className="form" onSubmit={submit}>
-                  <div className="field"><label>IGN <span className="required">*</span></label><input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" /></div>
-                  <div className="grid-2"><ChoiceGroup title="Attendance" name="attendance" value={form.attendance} disabled={false} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} /><ChoiceGroup title="Pilot" name="pilot" value={form.pilot} disabled={false} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' Not Attending']]} onChange={(value) => update('pilot', value)} /></div>
-                  <div className="grid-2"><div className="field"><label>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label><input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" /></div><div className="field"><label>Hours</label><input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" /></div></div>
-                  <div className="field"><label>Notes <span>(optional)</span></label><textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" /></div>
-                  <div className="submit-row"><button className="submit" type="submit" disabled={closed}>SUBMIT RESPONSE</button></div>
-                  {message && <div className={`notice ${message.includes('submitted successfully') ? 'good' : 'danger'}`}>{message}</div>}
-                </form>
-              ) : lockedEntry ? (
-                <div className="form"><div className="notice good"><span className="lock">{ICONS.lock}</span> Your response is locked after submission. This lock is tied to your Discord account.</div><div className="entry" style={{ marginTop: 10 }}><div className="entry-top"><div className="entry-ign">{lockedEntry.ign}</div><span className="badge info">SUBMITTED {new Date(lockedEntry.submittedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}</span></div><div className="badge-row"><span className={`badge ${lockedEntry.attendance === 'attending' ? 'good' : 'danger'}`}>{lockedEntry.attendance === 'attending' ? ICONS.yes : ICONS.no} {lockedEntry.attendance === 'attending' ? 'ATTENDING' : 'NOT ATTENDING'}</span><span className="badge info">{lockedEntry.pilot === 'have_pilot' ? ICONS.yes : ICONS.no} {lockedEntry.pilot === 'have_pilot' ? `PILOT: ${lockedEntry.pilotName}` : 'NO PILOT'}</span><span className="badge info">{lockedEntry.hours ? `${lockedEntry.hours} HRS` : 'HOURS: —'}</span></div>{lockedEntry.notes && <div className="entry-notes">{lockedEntry.notes}</div>}</div></div>
-              ) : null}
-
-              {attendingRankings.length > 0 && (
-                <section className="rankings-panel" aria-labelledby="attending-rankings-title">
-                  <div className="card-heading ranking-heading"><div className="eyebrow">LIVE RANKING</div><h2 id="attending-rankings-title">Attending Rankings</h2><p>Members who selected <b>Attending</b>, ranked by available hours.</p></div>
-                  <div className="ranking-list">
-                    {attendingRankings.map((item) => (
-                      <div className="ranking-item" key={`${item.rank}-${item.ign}`}>
-                        <span className="ranking-position">#{item.rank}</span>
-                        <span className="ranking-ign">{item.ign}</span>
-                        <span className="ranking-hours">{item.hours ? `${item.hours} HRS` : 'HOURS: —'}</span>
+                <div className="responder-ranking">
+                  {attendingRankings.length > 0 && (
+                    <section className="rankings-panel" aria-labelledby="attending-rankings-title">
+                      <div className="card-heading ranking-heading"><div className="eyebrow">LIVE RANKING</div><h2 id="attending-rankings-title">Attending Rankings</h2><p>Members who selected <b>Attending</b>, ranked by available hours.</p></div>
+                      <div className="ranking-list">
+                        {attendingRankings.map((item) => (
+                          <div className="ranking-item" key={`${item.rank}-${item.ign}`}>
+                            <span className="ranking-position">#{item.rank}</span>
+                            <span className="ranking-ign">{item.ign}</span>
+                            <span className="ranking-hours">{item.hours ? `${item.hours} HRS` : 'HOURS: —'}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </section>
-              )}
+                    </section>
+                  )}
+                </div>
+              </div>
             </>
           )}
 
           {adminMode && (
             <section className="admin-panel">
               <div className="card-heading"><div className="eyebrow">ADMIN CONTROL</div><h2>Final Day Responses</h2><p>Manage attendance responses, add entries manually, export CSV, and remove responses when needed.</p></div>
-              <AdminResponseForm deadline={deadline} adminPassword={adminPassword} onCreated={(entry) => { setEntries((old) => [...old, entry]); setAttendingRankings((old) => [...old, ...(entry.attendance === 'attending' ? [{ rank: old.length + 1, ign: entry.ign, hours: entry.hours }] : [])]); }} onResetLocked={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))} />
-              <div className="admin-results"><div className="admin-results-head"><div><div className="eyebrow">RESPONSE LIST</div><h3>{entries.length} RESPONSE{entries.length === 1 ? '' : 'S'}</h3></div><div className="admin-results-actions"><button className="small-btn" type="button" onClick={() => exportCsv(entries)}>EXPORT CSV</button><button className="small-btn" type="button" onClick={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))}>REFRESH</button></div></div>{deleteMessage && <div className={`notice ${deleteMessage.includes('successfully') ? 'good' : 'danger'}`}>{deleteMessage}</div>}<div className="entry-list">{entries.length === 0 ? <div className="empty-state">No responses yet.</div> : entries.map((entry) => <AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry} />)}</div></div>
+              <div className="admin-layout">
+                <div className="admin-main">
+                  <AdminResponseForm deadline={deadline} adminPassword={adminPassword} onCreated={(entry) => { setEntries((old) => [...old, entry]); setAttendingRankings((old) => [...old, ...(entry.attendance === 'attending' ? [{ rank: old.length + 1, ign: entry.ign, hours: entry.hours }] : [])]); }} onResetLocked={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))} />
+                </div>
+                <div className="admin-results">
+                  <div className="admin-results-head"><div><div className="eyebrow">RESPONSE LIST</div><h3>{entries.length} RESPONSE{entries.length === 1 ? '' : 'S'}</h3></div><div className="admin-results-actions"><button className="small-btn" type="button" onClick={() => exportCsv(entries)}>EXPORT CSV</button><button className="small-btn" type="button" onClick={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))}>REFRESH</button></div></div>
+                  {deleteMessage && <div className={`notice ${deleteMessage.includes('successfully') ? 'good' : 'danger'}`}>{deleteMessage}</div>}
+                  <div className="entry-list">{entries.length === 0 ? <div className="empty-state">No responses yet.</div> : entries.map((entry) => <AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry} />)}</div>
+                </div>
+              </div>
             </section>
           )}
         </main>
