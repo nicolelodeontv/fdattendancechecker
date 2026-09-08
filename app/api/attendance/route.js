@@ -2,25 +2,29 @@ import { NextResponse } from 'next/server';
 
 const OWNER = 'nicolelodeontv';
 const REPO = 'fdattendancechecker';
-const ISSUE_NUMBER = 1;
-const ISSUE_API = `https://api.github.com/repos/${OWNER}/${REPO}/issues/${ISSUE_NUMBER}`;
-const STORE_MARKER = '<!-- FD_ATTENDANCE_STORE -->';
+const DATA_PATH = 'data/attendance.json';
+const DATA_API = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${DATA_PATH}`;
 const GITHUB_HEADERS = {
   Accept: 'application/vnd.github+json',
   'X-GitHub-Api-Version': '2022-11-28',
   'User-Agent': 'fdattendancechecker',
 };
 
-async function githubGet() {
+function authHeaders() {
   const token = process.env.GITHUB_TOKEN;
   if (!token) throw new Error('GITHUB_TOKEN is not configured');
-  const res = await fetch(ISSUE_API, {
-    headers: {
-      ...GITHUB_HEADERS,
-      Authorization: `Bearer ${token.trim()}`,
-    },
+  return {
+    ...GITHUB_HEADERS,
+    Authorization: `Bearer ${token.trim()}`,
+  };
+}
+
+async function githubGet() {
+  const res = await fetch(DATA_API, {
+    headers: authHeaders(),
     cache: 'no-store',
   });
+
   if (!res.ok) {
     let detail = '';
     try {
@@ -31,30 +35,46 @@ async function githubGet() {
     const suffix = detail ? `: ${detail}` : '';
     throw new Error(`GitHub data store GET failed: ${res.status}${suffix}`);
   }
+
   const json = await res.json();
-  const body = String(json.body || '');
-  const raw = body.startsWith(STORE_MARKER) ? body.slice(STORE_MARKER.length).trim() : body.trim();
-  if (!raw) return { data: { deadline: null, entries: [] } };
+  const sha = String(json.sha || '');
+  const encoded = String(json.content || '').replace(/\s/g, '');
+
+  if (!sha || !encoded) {
+    throw new Error('GitHub data store returned an invalid file payload');
+  }
+
+  let data;
   try {
-    return { data: JSON.parse(raw) };
+    const raw = Buffer.from(encoded, 'base64').toString('utf8').trim();
+    data = raw ? JSON.parse(raw) : { deadline: null, entries: [] };
   } catch {
     throw new Error('GitHub data store contains invalid JSON');
   }
+
+  return { data, sha };
 }
 
-async function githubPut(data, message) {
-  const token = process.env.GITHUB_TOKEN;
-  if (!token) throw new Error('GITHUB_TOKEN is not configured');
-  const body = `${STORE_MARKER}\n${JSON.stringify(data)}`;
-  const res = await fetch(ISSUE_API, {
-    method: 'PATCH',
+async function githubPut(data, message, sha) {
+  if (!sha) throw new Error('GitHub data store file SHA is missing');
+
+  const content = `${JSON.stringify(data, null, 2)}\n`;
+  const encoded = Buffer.from(content, 'utf8').toString('base64');
+
+  const res = await fetch(DATA_API, {
+    method: 'PUT',
     headers: {
-      ...GITHUB_HEADERS,
-      Authorization: `Bearer ${token.trim()}`,
+      ...authHeaders(),
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ body }),
+    body: JSON.stringify({
+      message,
+      content: encoded,
+      sha,
+    }),
+    cache: 'no-store',
   });
+
   if (!res.ok) {
     let detail = '';
     try {
@@ -65,6 +85,7 @@ async function githubPut(data, message) {
     const suffix = detail ? `: ${detail}` : '';
     throw new Error(`GitHub data store update failed: ${res.status}${suffix}`);
   }
+
   return res.json();
 }
 
@@ -120,8 +141,6 @@ export async function GET(req) {
   try {
     const isAdmin = new URL(req.url).searchParams.get('admin') === '1';
 
-    // Authenticate admin separately from the GitHub datastore. A GitHub token
-    // failure must never be reported as an incorrect admin password.
     if (isAdmin && !adminOk(req)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -144,10 +163,10 @@ export async function GET(req) {
       throw error;
     }
 
-    let { data } = dataResult;
+    let { data, sha } = dataResult;
     if (!data.deadline) {
       data.deadline = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
-      await githubPut(data, 'Initialize 48-hour attendance deadline');
+      await githubPut(data, 'Initialize 48-hour attendance deadline', sha);
     }
 
     if (!isAdmin) {
@@ -183,25 +202,25 @@ export async function POST(req) {
       if (!deadline || Number.isNaN(Date.parse(deadline))) {
         return NextResponse.json({ error: 'A valid response deadline is required.' }, { status: 400 });
       }
-      const { data } = await githubGet();
+      const { data, sha } = await githubGet();
       data.deadline = new Date(deadline).toISOString();
-      await githubPut(data, `Admin set FD attendance deadline: ${data.deadline}`);
+      await githubPut(data, `Admin set FD attendance deadline: ${data.deadline}`, sha);
       return NextResponse.json({ ok: true, deadline: data.deadline });
     }
 
     if (isAdmin && body?.action === 'reset_locked') {
-      const { data } = await githubGet();
+      const { data, sha } = await githubGet();
       const entries = data.entries || [];
       const lockedCount = entries.filter((entry) => entry.locked !== false).length;
       data.entries = entries.filter((entry) => entry.locked === false);
-      await githubPut(data, `Admin reset locked FD attendance responses: ${lockedCount} removed`);
+      await githubPut(data, `Admin reset locked FD attendance responses: ${lockedCount} removed`, sha);
       return NextResponse.json({ ok: true, removed: lockedCount });
     }
 
     if (isAdmin && body?.action === 'reset_one') {
       const id = String(body.id || '');
       if (!id) return NextResponse.json({ error: 'Response id is required.' }, { status: 400 });
-      const { data } = await githubGet();
+      const { data, sha } = await githubGet();
       const entries = data.entries || [];
       const index = entries.findIndex((entry) => String(entry.id) === id);
       if (index === -1) return NextResponse.json({ error: 'Response not found.' }, { status: 404 });
@@ -210,7 +229,7 @@ export async function POST(req) {
       }
       const target = normalizeEntry(entries[index]);
       data.entries = entries.filter((entry) => String(entry.id) !== id);
-      await githubPut(data, `Admin reset FD attendance response: ${target.ign || id}`);
+      await githubPut(data, `Admin reset FD attendance response: ${target.ign || id}`, sha);
       return NextResponse.json({ ok: true, removed: 1, entry: target });
     }
 
@@ -231,7 +250,7 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Pilot Name is required when you have a pilot.' }, { status: 400 });
     }
 
-    const { data } = await githubGet();
+    const { data, sha } = await githubGet();
     const now = new Date();
     const deadline = data.deadline || new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString();
     if (!isAdmin && Date.now() > Date.parse(deadline)) {
@@ -261,7 +280,7 @@ export async function POST(req) {
 
     data.deadline = deadline;
     data.entries = [...(data.entries || []), entry];
-    await githubPut(data, `${isAdmin ? 'Admin add' : 'Add'} FD attendance response: ${ign}`);
+    await githubPut(data, `${isAdmin ? 'Admin add' : 'Add'} FD attendance response: ${ign}`, sha);
     return NextResponse.json({ entry, deadline }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -272,12 +291,12 @@ export async function PATCH(req) {
   if (!adminOk(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const body = await req.json();
-    const { data } = await githubGet();
+    const { data, sha } = await githubGet();
     const index = (data.entries || []).findIndex((x) => String(x.id) === String(body.id));
     if (index === -1) return NextResponse.json({ error: 'Entry not found.' }, { status: 404 });
     const current = data.entries[index];
     data.entries[index] = normalizeEntry({ ...current, ...body, locked: current.locked !== false });
-    await githubPut(data, `Admin edit FD attendance: ${data.entries[index].ign}`);
+    await githubPut(data, `Admin edit FD attendance: ${data.entries[index].ign}`, sha);
     return NextResponse.json({ entry: data.entries[index] });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -288,9 +307,9 @@ export async function DELETE(req) {
   if (!adminOk(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const body = await req.json();
-    const { data } = await githubGet();
+    const { data, sha } = await githubGet();
     data.entries = (data.entries || []).filter((x) => String(x.id) !== String(body.id));
-    await githubPut(data, 'Admin delete FD attendance response');
+    await githubPut(data, 'Admin delete FD attendance response', sha);
     return NextResponse.json({ ok: true });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
