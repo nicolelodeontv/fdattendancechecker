@@ -1,4 +1,4 @@
-/* Security, accessibility, legal pages, and mobile polish. */
+/* Security, accessibility, legal pages, rankings, and mobile polish. */
 
 html { color-scheme: dark; }
 body { min-height: 100vh; }
@@ -52,6 +52,28 @@ body { min-height: 100vh; }
 .legal-updated { color: #9e9e9e !important; font-size: 12px; margin-top: 0; }
 .legal-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 
+.rankings-panel {
+  margin-top: 28px;
+  padding: 22px;
+  border: 1px solid #3f3f3f;
+  background: #171717;
+}
+.ranking-heading { padding-bottom: 8px; }
+.ranking-heading h2 { margin-bottom: 6px; }
+.ranking-list { display: grid; gap: 8px; margin-top: 14px; }
+.ranking-item {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid #333;
+  background: #111;
+}
+.ranking-position { font-weight: 700; color: #fff; }
+.ranking-ign { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #f2f2f2; }
+.ranking-hours { color: #bdbdbd; font-size: 12px; white-space: nowrap; }
+
 /* Do not rely on color alone for important form states. */
 .notice.good { border-left: 3px solid #b9e4b9; }
 .notice.danger { border-left: 3px solid #f0a6a6; }
@@ -67,4 +89,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .legal-card { padding: 22px 18px; }
   .legal-nav { align-items: flex-start; }
   .legal-close { padding-left: 12px; padding-right: 12px; }
+  .rankings-panel { padding: 16px; }
+  .ranking-item { grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; padding: 10px 11px; }
 }
