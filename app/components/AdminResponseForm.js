@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 const EMPTY = { ign: '', attendance: '', pilot: '', pilotName: '', hours: '', notes: '' };
 const ICONS = { yes: '✅', no: '❌', hourglass: '⏳' };
@@ -13,8 +14,8 @@ function formatCountdown(ms) {
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
   return d > 0
-    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-    : `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '0')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '2')}`
+    : `${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '2')}`;
 }
 
 function manilaInputValue(iso) {
@@ -43,6 +44,7 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
   const [resetPopup, setResetPopup] = useState(null);
   const [lockedEntries, setLockedEntries] = useState([]);
   const [selectedResetId, setSelectedResetId] = useState('');
+  const [resetPortalTarget, setResetPortalTarget] = useState(null);
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -56,6 +58,13 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
   useEffect(() => {
     loadLockedEntries();
   }, [adminPassword]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const target = document.querySelector('.admin-results');
+    setResetPortalTarget(target);
+    return undefined;
+  }, []);
 
   const remaining = useMemo(() => (deadline ? Date.parse(deadline) - now : 0), [deadline, now]);
   const closed = remaining <= 0;
@@ -172,6 +181,20 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
     }
   }
 
+  const resetControls = (
+    <div className="admin-reset-actions admin-results-reset">
+      <label className="admin-reset-label" htmlFor="reset-response-select">RESET A SPECIFIC RESPONSE</label>
+      <div className="admin-reset-select-row">
+        <select id="reset-response-select" className="small-select reset-response-select" value={selectedResetId} onChange={(e) => setSelectedResetId(e.target.value)} disabled={saving || resetting || !lockedEntries.length}>
+          <option value="">SELECT LOCKED RESPONSE</option>
+          {lockedEntries.map((entry) => <option key={entry.id} value={entry.id}>{entry.ign || 'Unnamed response'}</option>)}
+        </select>
+        <button className="small-btn reset-locked-btn" type="button" onClick={requestResetSelected} disabled={saving || resetting || !selectedResetId}>{resetting ? 'RESETTING…' : 'RESET SELECTED'}</button>
+      </div>
+      <button className="small-btn reset-locked-btn reset-all-btn" type="button" onClick={requestResetAll} disabled={saving || resetting}>{resetting ? 'RESETTING…' : 'RESET ALL LOCKED RESPONSES'}</button>
+    </div>
+  );
+
   const fieldStyle = { position: 'relative', zIndex: 60, pointerEvents: 'auto' };
 
   return (
@@ -229,20 +252,10 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
           <button className="submit" type="submit" disabled={saving || resetting}>{saving ? 'SAVING…' : 'SUBMIT RESPONSE'}</button>
         </div>
 
-        <div className="admin-reset-actions">
-          <label className="admin-reset-label" htmlFor="reset-response-select">RESET A SPECIFIC RESPONSE</label>
-          <div className="admin-reset-select-row">
-            <select id="reset-response-select" className="small-select reset-response-select" value={selectedResetId} onChange={(e) => setSelectedResetId(e.target.value)} disabled={saving || resetting || !lockedEntries.length}>
-              <option value="">SELECT LOCKED RESPONSE</option>
-              {lockedEntries.map((entry) => <option key={entry.id} value={entry.id}>{entry.ign || 'Unnamed response'}</option>)}
-            </select>
-            <button className="small-btn reset-locked-btn" type="button" onClick={requestResetSelected} disabled={saving || resetting || !selectedResetId}>{resetting ? 'RESETTING…' : 'RESET SELECTED'}</button>
-          </div>
-          <button className="small-btn reset-locked-btn reset-all-btn" type="button" onClick={requestResetAll} disabled={saving || resetting}>{resetting ? 'RESETTING…' : 'RESET ALL LOCKED RESPONSES'}</button>
-        </div>
-
         {message && <div className={`notice ${message.includes('successfully') || message.includes('Reset complete') || message.includes('has been reset') || message.includes('deadline updated') ? 'good' : 'danger'}`}>{message}</div>}
       </form>
+
+      {resetPortalTarget && createPortal(resetControls, resetPortalTarget)}
 
       {submitPopup && (
         <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget && !saving) setSubmitPopup(null); }}>
