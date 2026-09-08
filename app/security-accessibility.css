@@ -74,6 +74,29 @@ body { min-height: 100vh; }
 .ranking-ign { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #f2f2f2; }
 .ranking-hours { color: #bdbdbd; font-size: 12px; white-space: nowrap; }
 
+.post-submission-panel {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  padding: 0 20px 28px;
+}
+.post-submission-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+  border: 1px solid #3f3f3f;
+  background: #171717;
+}
+.post-submission-head p { margin: 4px 0 0; color: #bdbdbd; }
+.post-submission-ranking {
+  margin-top: 12px;
+  padding: 22px;
+  border: 1px solid #3f3f3f;
+  background: #171717;
+}
+.post-submission-active .rankings-panel { display: none; }
+
 /* Do not rely on color alone for important form states. */
 .notice.good { border-left: 3px solid #b9e4b9; }
 .notice.danger { border-left: 3px solid #f0a6a6; }
@@ -89,6 +112,9 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   .legal-card { padding: 22px 18px; }
   .legal-nav { align-items: flex-start; }
   .legal-close { padding-left: 12px; padding-right: 12px; }
-  .rankings-panel { padding: 16px; }
+  .post-submission-panel { padding-left: 10px; padding-right: 10px; }
+  .post-submission-head { flex-direction: column; align-items: stretch; padding: 16px; }
+  .post-submission-head .small-btn { width: 100%; }
+  .post-submission-ranking { padding: 16px; }
   .ranking-item { grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; padding: 10px 11px; }
 }
