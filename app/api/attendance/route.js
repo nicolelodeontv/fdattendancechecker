@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 const OWNER = 'nicolelodeontv';
 const REPO = 'fdattendancechecker';
 const DATA_PATH = 'data/attendance.json';
+const DATA_BRANCH = 'attendance-data';
 const DATA_API = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${DATA_PATH}`;
 const GITHUB_HEADERS = {
   Accept: 'application/vnd.github+json',
@@ -38,7 +39,7 @@ function authHeaders() {
 }
 
 async function githubGet() {
-  const res = await fetch(DATA_API, { headers: authHeaders(), cache: 'no-store' });
+  const res = await fetch(`${DATA_API}?ref=${encodeURIComponent(DATA_BRANCH)}`, { headers: authHeaders(), cache: 'no-store' });
   if (!res.ok) {
     let detail = '';
     try { detail = String((await res.json())?.message || '').trim(); } catch {}
@@ -62,7 +63,7 @@ async function githubPut(data, message, sha) {
   const res = await fetch(DATA_API, {
     method: 'PUT',
     headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ message, content: encoded, sha }),
+    body: JSON.stringify({ message, content: encoded, sha, branch: DATA_BRANCH }),
     cache: 'no-store',
   });
   if (!res.ok) {
