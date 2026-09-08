@@ -1,13 +1,18 @@
+import Link from 'next/link';
+
 export const metadata = {
   title: 'Privacy Policy | CHAOS FD Attendance Checker',
-  description: 'Privacy information for the CHAOS Final Day Attendance Checker, including Discord authentication, attendance data, cookies, and analytics.',
+  description: 'Privacy information for the CHAOS Final Day Attendance Checker, including Discord authentication and attendance data.',
 };
 
 export default function PrivacyPage() {
   return (
     <main className="legal-page">
       <div className="legal-card">
-        <div className="eyebrow">LEGAL</div>
+        <div className="legal-nav">
+          <div className="eyebrow">LEGAL</div>
+          <Link className="small-btn legal-close" href="/">CLOSE</Link>
+        </div>
         <h1>Privacy Policy</h1>
         <p className="legal-updated">Last updated: September 9, 2026</p>
 
@@ -23,12 +28,12 @@ export default function PrivacyPage() {
 
         <section>
           <h2>3. Storage and service providers</h2>
-          <p>Attendance records are stored in the connected project data store. Discord is used for authentication. The website is hosted through Vercel. Optional Vercel Web Analytics and Speed Insights may process aggregated website usage and performance information only after analytics consent is granted.</p>
+          <p>Attendance records are stored in the connected project data store. Discord is used for authentication. The website is hosted through Vercel.</p>
         </section>
 
         <section>
           <h2>4. Cookies and local storage</h2>
-          <p>Essential authentication uses an HttpOnly, Secure Discord session cookie. The site also uses browser local storage to remember whether you selected an analytics preference and to support the response interface. Optional analytics scripts are not loaded until you allow analytics.</p>
+          <p>Essential authentication uses an HttpOnly, Secure Discord session cookie. The site may also use browser local storage to support the response interface.</p>
         </section>
 
         <section>
@@ -48,7 +53,7 @@ export default function PrivacyPage() {
 
         <section>
           <h2>8. Your choices</h2>
-          <p>You may decline optional analytics. You can also manually log out of Discord at any time using the logout control on the attendance page.</p>
+          <p>You can manually log out of Discord at any time using the logout control on the attendance page.</p>
         </section>
 
         <section>
