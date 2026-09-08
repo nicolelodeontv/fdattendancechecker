@@ -14,7 +14,7 @@ function formatCountdown(ms) {
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
   return d > 0
-    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '0')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '2')}`
+    ? `${String(d).padStart(2, '0')}:${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '2')}`
     : `${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '2')}`;
 }
 
@@ -61,9 +61,16 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
 
   useEffect(() => {
     if (typeof document === 'undefined') return undefined;
-    const target = document.querySelector('.admin-results');
-    setResetPortalTarget(target);
-    return undefined;
+    const results = document.querySelector('.admin-results');
+    if (!results) return undefined;
+    const anchor = document.createElement('div');
+    anchor.className = 'admin-reset-portal-anchor';
+    results.insertBefore(anchor, results.firstChild);
+    setResetPortalTarget(anchor);
+    return () => {
+      setResetPortalTarget(null);
+      anchor.remove();
+    };
   }, []);
 
   const remaining = useMemo(() => (deadline ? Date.parse(deadline) - now : 0), [deadline, now]);
