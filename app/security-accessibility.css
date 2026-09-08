@@ -17,7 +17,6 @@ body { min-height: 100vh; }
 }
 .site-footer a { color: #e8e8e8; text-decoration: none; }
 .site-footer a:hover { text-decoration: underline; text-underline-offset: 3px; }
-.site-footer-links { display: flex; gap: 14px; }
 
 .legal-page {
   min-height: 70vh;
@@ -64,7 +63,6 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 
 @media (max-width: 720px) {
   .site-footer { flex-direction: column; align-items: flex-start; padding-left: 14px; padding-right: 14px; }
-  .site-footer-links { gap: 12px; }
   .legal-page { padding: 12px 10px 28px; }
   .legal-card { padding: 22px 18px; }
   .legal-nav { align-items: flex-start; }
