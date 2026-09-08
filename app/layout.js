@@ -1,7 +1,6 @@
 import './globals.css';
 import './centered-layout.css';
 import './security-accessibility.css';
-import Link from 'next/link';
 
 export const metadata = {
   metadataBase: new URL('https://fdattendancechecker.vercel.app'),
@@ -35,11 +34,7 @@ export default function RootLayout({ children }) {
       <body>
         {children}
         <footer className="site-footer">
-          <span>CHAOS FD Attendance Checker</span>
-          <nav className="site-footer-links" aria-label="Legal">
-            <Link href="/privacy">Privacy Policy</Link>
-            <Link href="/terms">Terms &amp; Conditions</Link>
-          </nav>
+          <span>Created by <a href="https://discord.com/users/396080330702061588" target="_blank" rel="noopener noreferrer">Michol</a></span>
         </footer>
       </body>
     </html>
