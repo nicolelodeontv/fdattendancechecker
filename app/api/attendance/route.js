@@ -281,7 +281,10 @@ export async function POST(req) {
     data.deadline = deadline;
     data.entries = [...(data.entries || []), entry];
     await githubPut(data, `${isAdmin ? 'Admin add' : 'Add'} FD attendance response: ${ign}`, sha);
-    return NextResponse.json({ entry, deadline }, { status: 201 });
+
+    const response = NextResponse.json({ entry, deadline, loggedOut: !isAdmin }, { status: 201 });
+    if (!isAdmin) response.cookies.delete('discord_session');
+    return response;
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
