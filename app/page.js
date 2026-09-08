@@ -266,30 +266,7 @@ export default function Home() {
               {discordUser && !lockedEntry ? (
                 <form className="form" onSubmit={submit}>
                   <div className="field"><label>IGN <span className="required">*</span></label><input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" /></div>
-                  <div className="grid-2">
-                    <ChoiceGroup
-                      title="Attendance"
-                      name="attendance"
-                      value={form.attendance}
-                      disabled={false}
-                      options={[
-                        ['attending', `${ICONS.yes} Attending`],
-                        ['not_attending', `${ICONS.no} Not Attending`],
-                      ]}
-                      onChange={(value) => update('attendance', value)}
-                    />
-                    <ChoiceGroup
-                      title="Pilot"
-                      name="pilot"
-                      value={form.pilot}
-                      disabled={false}
-                      options={[
-                        ['have_pilot', `${ICONS.yes} Have Pilot`],
-                        ['no_pilot', `${ICONS.no} Not Attending`],
-                      ]}
-                      onChange={(value) => update('pilot', value)}
-                    />
-                  </div>
+                  <div className="grid-2"><ChoiceGroup title="Attendance" name="attendance" value={form.attendance} disabled={false} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} /><ChoiceGroup title="Pilot" name="pilot" value={form.pilot} disabled={false} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' Not Attending']]} onChange={(value) => update('pilot', value)} /></div>
                   <div className="grid-2"><div className="field"><label>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label><input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div><div className="field"><label>Hours</label><input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div></div>
                   <div className="field"><label>Notes <span>(optional)</span></label><textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" /></div>
                   <div className="submit-row"><button className="submit" type="submit" disabled={closed}>SUBMIT RESPONSE</button></div>
@@ -309,7 +286,7 @@ export default function Home() {
               <div className="card-heading"><div className="eyebrow">ADMIN CONTROL</div><h2>Final Day Responses</h2><p>Manage attendance responses, add entries manually, export CSV, and remove responses when needed.</p></div>
               <AdminResponseForm deadline={deadline} adminPassword={adminPassword} onCreated={(entry) => setEntries((old) => [...old, entry])} onResetLocked={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))} />
               <div className="admin-results">
-                <div className="admin-results-head"><div><div className="eyebrow">RESPONSE LIST</div><h3>{entries.length} RESPONSE{entries.length === 1 ? '' : 'S'}</h3></div><div className="admin-results-actions"><button className="small-btn" type="button" onClick={() => exportCsv(entries)}>EXPORT CSV</button><button className="small-btn" type="button" onClick={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))}>REFRESH</button><button className="small-btn" type="button" onClick={logoutAdmin}>LOGOUT ADMIN</button></div></div>
+                <div className="admin-results-head"><div><div className="eyebrow">RESPONSE LIST</div><h3>{entries.length} RESPONSE{entries.length === 1 ? '' : 'S'}</h3></div><div className="admin-results-actions"><button className="small-btn" type="button" onClick={() => exportCsv(entries)}>EXPORT CSV</button><button className="small-btn" type="button" onClick={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))}>REFRESH</button></div></div>
                 {deleteMessage && <div className={`notice ${deleteMessage.includes('successfully') ? 'good' : 'danger'}`}>{deleteMessage}</div>}
                 <div className="entry-list">
                   {entries.length === 0 ? <div className="empty-state">No responses yet.</div> : entries.map((entry) => <AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry} />)}
