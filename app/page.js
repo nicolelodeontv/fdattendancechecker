@@ -153,16 +153,17 @@ export default function Home() {
       const res = await fetch('/api/attendance', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Submission failed.');
-      localStorage.setItem('fd_attendance_entry', JSON.stringify(data.entry));
-      setLockedEntry(data.entry); setDeadline(data.deadline); setMessage('Response submitted and locked.');
       setSubmitPopup({ ign: data.entry?.ign || form.ign.trim() });
+      await logoutDiscord();
+      setMessage('Response submitted and locked. You have also been logged out of Discord.');
+      setDeadline(data.deadline);
     } catch (error) { setMessage(error.message); }
   }
 
   async function logoutDiscord() {
     await fetch('/api/auth/discord/me', { method: 'DELETE' }).catch(() => {});
     localStorage.removeItem('fd_attendance_entry');
-    setDiscordUser(null); setLockedEntry(null); setForm(EMPTY); setMessage('Logged out of Discord.');
+    setDiscordUser(null); setLockedEntry(null); setForm(EMPTY);
   }
 
   async function adminLogin(e) {
@@ -276,7 +277,7 @@ export default function Home() {
                   <div className="grid-2"><div className="field"><label>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label><input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div><div className="field"><label>Hours</label><input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div></div>
                   <div className="field"><label>Notes <span>(optional)</span></label><textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" /></div>
                   <div className="submit-row"><button className="submit" type="submit" disabled={closed}>SUBMIT RESPONSE</button></div>
-                  {message && <div className={`notice ${message.includes('locked') ? 'good' : 'danger'}`}>{message}</div>}
+                  {message && <div className={`notice ${message.includes('submitted') ? 'good' : 'danger'}`}>{message}</div>}
                 </form>
               ) : lockedEntry ? (
                 <div className="form">
@@ -306,7 +307,7 @@ export default function Home() {
       {submitPopup && (
         <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setSubmitPopup(null); }}>
           <div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="submit-modal-title">
-            <div className="eyebrow">RESPONSE SUBMITTED</div><h2 id="submit-modal-title">SUCCESS</h2><div className="notice good">✅ <b>{submitPopup.ign}</b> was submitted successfully.</div><p>Your response is now <b>🔒 LOCKED</b> to your Discord account.</p><div className="confirm-actions"><button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button></div>
+            <div className="eyebrow">RESPONSE SUBMITTED</div><h2 id="submit-modal-title">SUCCESS</h2><div className="notice good">✅ <b>{submitPopup.ign}</b> was submitted successfully.</div><p>Your response is now <b>🔒 LOCKED</b> and your Discord session has been logged out.</p><div className="confirm-actions"><button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button></div>
           </div>
         </div>
       )}
