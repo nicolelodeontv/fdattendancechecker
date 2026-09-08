@@ -119,9 +119,32 @@ function normalizeEntry(entry) {
 export async function GET(req) {
   try {
     const isAdmin = new URL(req.url).searchParams.get('admin') === '1';
-    if (isAdmin && !adminOk(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    let { data } = await githubGet();
+    // Authenticate admin separately from the GitHub datastore. A GitHub token
+    // failure must never be reported as an incorrect admin password.
+    if (isAdmin && !adminOk(req)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    let dataResult;
+    try {
+      dataResult = await githubGet();
+    } catch (error) {
+      if (isAdmin) {
+        return NextResponse.json(
+          {
+            authenticated: true,
+            entries: [],
+            deadline: null,
+            datastoreError: error.message,
+          },
+          { status: 200, headers: { 'Cache-Control': 'no-store' } },
+        );
+      }
+      throw error;
+    }
+
+    let { data } = dataResult;
     if (!data.deadline) {
       data.deadline = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
       await githubPut(data, 'Initialize 48-hour attendance deadline');
@@ -139,7 +162,7 @@ export async function GET(req) {
     }
 
     return NextResponse.json(
-      { deadline: data.deadline, entries: (data.entries || []).map(normalizeEntry) },
+      { authenticated: true, deadline: data.deadline, entries: (data.entries || []).map(normalizeEntry) },
       { headers: { 'Cache-Control': 'no-store' } },
     );
   } catch (error) {
