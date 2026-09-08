@@ -188,14 +188,14 @@ export default function AdminResponseForm({ deadline, adminPassword, onCreated, 
       </div>
 
       <form className="form" onSubmit={submit} style={{ position: 'relative', zIndex: 50, pointerEvents: 'auto' }}>
-        <div className="admin-deadline-control">
+        <div className="admin-reset-actions admin-deadline-control">
           <div>
             <label className="admin-reset-label" htmlFor="admin-response-deadline">SET RESPONSE DEADLINE</label>
             <div className="admin-deadline-help">Philippine Time · Asia/Manila (UTC+8)</div>
           </div>
-          <div className="admin-deadline-row">
-            <input id="admin-response-deadline" className="admin-deadline-input" type="datetime-local" value={deadlineValue} onChange={(e) => setDeadlineValue(e.target.value)} disabled={savingDeadline || saving || resetting} />
-            <button className="small-btn" type="button" onClick={saveDeadline} disabled={savingDeadline || saving || resetting || !deadlineValue}>{savingDeadline ? 'SAVING…' : 'SAVE DEADLINE'}</button>
+          <div className="admin-reset-select-row admin-deadline-row">
+            <input id="admin-response-deadline" className="small-select admin-deadline-input" type="datetime-local" value={deadlineValue} onChange={(e) => setDeadlineValue(e.target.value)} disabled={savingDeadline || saving || resetting} />
+            <button className="small-btn reset-locked-btn" type="button" onClick={saveDeadline} disabled={savingDeadline || saving || resetting || !deadlineValue}>{savingDeadline ? 'SAVING…' : 'SAVE DEADLINE'}</button>
           </div>
         </div>
 
