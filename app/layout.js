@@ -1,6 +1,7 @@
 import './globals.css';
 import './centered-layout.css';
 import './security-accessibility.css';
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata = {
   metadataBase: new URL('https://fdattendancechecker.vercel.app'),
@@ -42,6 +43,7 @@ export default function RootLayout({ children }) {
           <span>CHAOS FD Attendance Checker</span>
           <span>Created by <a href="https://discord.com/users/396080330702061588" target="_blank" rel="noopener noreferrer">Michol</a></span>
         </footer>
+        <Analytics />
       </body>
     </html>
   );
