@@ -1,6 +1,7 @@
 import './globals.css';
 import './centered-layout.css';
 import './security-accessibility.css';
+import PostSubmissionLogout from './components/PostSubmissionLogout';
 
 export const metadata = {
   metadataBase: new URL('https://fdattendancechecker.vercel.app'),
@@ -38,6 +39,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         {children}
+        <PostSubmissionLogout />
         <footer className="site-footer">
           <span>CHAOS FD Attendance Checker</span>
           <span>Created by <a href="https://discord.com/users/396080330702061588" target="_blank" rel="noopener noreferrer">Michol</a></span>
