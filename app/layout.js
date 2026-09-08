@@ -12,6 +12,11 @@ export const metadata = {
   applicationName: 'CHAOS FD Attendance Checker',
   keywords: ['CHAOS', 'Final Day', 'attendance', 'Discord'],
   robots: { index: true, follow: true },
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
   openGraph: {
     title: 'CHAOS FD Attendance Checker',
     description: 'Discord-authenticated Final Day attendance response tracker for CHAOS.',
@@ -34,6 +39,7 @@ export default function RootLayout({ children }) {
       <body>
         {children}
         <footer className="site-footer">
+          <span>CHAOS FD Attendance Checker</span>
           <span>Created by <a href="https://discord.com/users/396080330702061588" target="_blank" rel="noopener noreferrer">Michol</a></span>
         </footer>
       </body>
