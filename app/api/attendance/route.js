@@ -109,6 +109,25 @@ function normalizeEntry(entry) {
   };
 }
 
+function buildAttendingRankings(entries) {
+  return (entries || [])
+    .map(normalizeEntry)
+    .filter((entry) => entry.attendance === 'attending')
+    .sort((a, b) => {
+      const hoursA = Number.parseFloat(a.hours) || 0;
+      const hoursB = Number.parseFloat(b.hours) || 0;
+      if (hoursB !== hoursA) return hoursB - hoursA;
+      const timeA = Date.parse(a.submittedAt || '') || 0;
+      const timeB = Date.parse(b.submittedAt || '') || 0;
+      return timeA - timeB;
+    })
+    .map((entry, index) => ({
+      rank: index + 1,
+      ign: entry.ign,
+      hours: entry.hours,
+    }));
+}
+
 export async function GET(req) {
   try {
     const isAdmin = new URL(req.url).searchParams.get('admin') === '1';
@@ -116,7 +135,7 @@ export async function GET(req) {
     let dataResult;
     try { dataResult = await githubGet(); }
     catch (error) {
-      if (isAdmin) return NextResponse.json({ authenticated: true, entries: [], deadline: null, datastoreError: error.message }, { status: 200, headers: { 'Cache-Control': 'no-store' } });
+      if (isAdmin) return NextResponse.json({ authenticated: true, entries: [], attendingRankings: [], deadline: null, datastoreError: error.message }, { status: 200, headers: { 'Cache-Control': 'no-store' } });
       throw error;
     }
     let { data, sha } = dataResult;
@@ -127,9 +146,9 @@ export async function GET(req) {
     if (!isAdmin) {
       const discord = await discordUser(req);
       const entry = discord?.discordId ? (data.entries || []).map(normalizeEntry).find((x) => x.discordId === String(discord.discordId)) : null;
-      return NextResponse.json({ deadline: data.deadline, entry: entry || null }, { headers: { 'Cache-Control': 'no-store' } });
+      return NextResponse.json({ deadline: data.deadline, entry: entry || null, attendingRankings: buildAttendingRankings(data.entries) }, { headers: { 'Cache-Control': 'no-store' } });
     }
-    return NextResponse.json({ authenticated: true, deadline: data.deadline, entries: (data.entries || []).map(normalizeEntry) }, { headers: { 'Cache-Control': 'no-store' } });
+    return NextResponse.json({ authenticated: true, deadline: data.deadline, entries: (data.entries || []).map(normalizeEntry), attendingRankings: buildAttendingRankings(data.entries) }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) { return NextResponse.json({ error: error.message }, { status: 500 }); }
 }
 
@@ -197,9 +216,8 @@ export async function POST(req) {
     data.entries = [...(data.entries || []), entry];
     await githubPut(data, `${isAdmin ? 'Admin add' : 'Add'} FD attendance response: ${ign}`, sha);
 
-    const response = NextResponse.json({ entry, deadline, loggedOut: !isAdmin }, { status: 201 });
-    if (!isAdmin) response.cookies.delete('discord_session');
-    return response;
+    const attendingRankings = buildAttendingRankings(data.entries);
+    return NextResponse.json({ entry, deadline, attendingRankings, loggedOut: false }, { status: 201 });
   } catch (error) { return NextResponse.json({ error: error.message }, { status: 500 }); }
 }
 
@@ -213,7 +231,7 @@ export async function PATCH(req) {
     const current = data.entries[index];
     data.entries[index] = normalizeEntry({ ...current, ...body, locked: current.locked !== false });
     await githubPut(data, `Admin edit FD attendance: ${data.entries[index].ign}`, sha);
-    return NextResponse.json({ entry: data.entries[index] });
+    return NextResponse.json({ entry: data.entries[index], attendingRankings: buildAttendingRankings(data.entries) });
   } catch (error) { return NextResponse.json({ error: error.message }, { status: 500 }); }
 }
 
@@ -224,6 +242,6 @@ export async function DELETE(req) {
     const { data, sha } = await githubGet();
     data.entries = (data.entries || []).filter((x) => String(x.id) !== String(body.id));
     await githubPut(data, 'Admin delete FD attendance response', sha);
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, attendingRankings: buildAttendingRankings(data.entries) });
   } catch (error) { return NextResponse.json({ error: error.message }, { status: 500 }); }
 }
