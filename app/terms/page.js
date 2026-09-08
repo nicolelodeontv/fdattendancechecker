@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export const metadata = {
   title: 'Terms & Conditions | CHAOS FD Attendance Checker',
   description: 'Terms and conditions for using the CHAOS Final Day Attendance Checker.',
@@ -7,7 +9,10 @@ export default function TermsPage() {
   return (
     <main className="legal-page">
       <div className="legal-card">
-        <div className="eyebrow">LEGAL</div>
+        <div className="legal-nav">
+          <div className="eyebrow">LEGAL</div>
+          <Link className="small-btn legal-close" href="/">CLOSE</Link>
+        </div>
         <h1>Terms &amp; Conditions</h1>
         <p className="legal-updated">Last updated: September 9, 2026</p>
 
@@ -43,7 +48,7 @@ export default function TermsPage() {
 
         <section>
           <h2>7. Privacy</h2>
-          <p>Use of the site is also governed by the <a href="/privacy">Privacy Policy</a>, which explains how authentication, attendance information, cookies, and optional analytics are handled.</p>
+          <p>Use of the site is also governed by the <a href="/privacy">Privacy Policy</a>, which explains how authentication, attendance information, and cookies are handled.</p>
         </section>
 
         <section>
