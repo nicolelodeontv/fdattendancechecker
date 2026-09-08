@@ -1,4 +1,4 @@
-/* Layout enlargement and vertical centering */
+/* Layout enlargement and full-width desktop layout */
 html, body { min-height: 100%; }
 body { min-height: 100vh; }
 .site-wrapper {
@@ -6,11 +6,12 @@ body { min-height: 100vh; }
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 32px 28px;
+  padding: 24px 16px 32px;
 }
 .shell {
-  width: min(1000px, 100%);
-  margin: 0 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
 }
 .site-header,
 .content-card {
@@ -18,7 +19,7 @@ body { min-height: 100vh; }
 }
 .header-banner {
   min-height: 58px;
-  padding: 14px 24px;
+  padding: 14px 28px;
   gap: 18px;
 }
 .header-banner h1 {
@@ -34,43 +35,43 @@ body { min-height: 100vh; }
 .header-actions { gap: 10px; }
 .header-actions>span { font-size: .58rem; }
 .header-admin-btn { height: 30px; padding: 0 12px; font-size: .56rem; }
-.header-admin-login { padding: 11px 18px; gap: 10px; }
+.header-admin-login { padding: 11px 24px; gap: 10px; }
 .header-admin-login input { height: 36px; padding: 8px 10px; font-size: .68rem; }
 .password-toggle { height: 30px; width: 32px; font-size: .68rem; }
-.server-time-bar { padding: 8px 20px; gap: 14px; }
+.server-time-bar { padding: 8px 28px; gap: 14px; }
 .server-label { font-size: .5rem; }
 .server-value, .server-zone { font-size: .52rem; }
 
-.card-heading { padding: 28px 40px 12px; }
+.card-heading { padding: 28px 48px 12px; }
 .eyebrow { font-size: .62rem; gap: 9px; }
 .eyebrow:before, .eyebrow:after { width: 42px; }
 .card-heading h2 { font-size: 2rem; }
-.card-heading p { max-width: 700px; font-size: .72rem; line-height: 1.55; }
-.deadline { margin: 12px 40px 18px; padding: 13px 16px; gap: 16px; }
+.card-heading p { max-width: 900px; font-size: .72rem; line-height: 1.55; }
+.deadline { margin: 12px 48px 18px; padding: 13px 16px; gap: 16px; }
 .deadline-copy { font-size: .62rem; }
 .deadline-time { font-size: .82rem; }
-.form { padding: 0 40px 32px; }
+.form { padding: 0 48px 32px; }
 .field { margin-top: 14px; }
 .field label { margin-bottom: 6px; font-size: .58rem; }
 .field input, .field textarea { min-height: 42px; padding: 9px 11px; font-size: .7rem; }
 .field textarea { min-height: 92px; }
-.grid-2 { gap: 18px; }
-.choices { gap: 10px; }
-.choice label { min-height: 40px; padding: 8px 10px; gap: 7px; font-size: .64rem; }
+.grid-2 { gap: 24px; }
+.choices { gap: 12px; }
+.choice label { min-height: 40px; padding: 8px 12px; gap: 7px; font-size: .64rem; }
 .choice .icon { font-size: .82rem; }
 .submit-row { margin-top: 18px; }
 .submit, a.submit[href="/api/auth/discord/login"] { height: 44px; font-size: .64rem; }
 .notice { margin-top: 12px; padding: 11px 12px; font-size: .62rem; }
 
-.admin { padding: 20px 40px 22px; }
+.admin { padding: 20px 48px 22px; }
 .admin-head h3 { font-size: .82rem; }
 .admin-sub { font-size: .5rem; }
 .small-btn { height: 31px; padding: 0 11px; font-size: .56rem; }
-.admin-results { margin: 16px 40px 0; }
+.admin-results { margin: 16px 48px 0; }
 
 @media (max-width: 700px) {
   .site-wrapper { align-items: flex-start; padding: 18px 12px 28px; }
-  .shell { width: min(100%, 620px); }
+  .shell { width: 100%; max-width: none; }
   .header-banner { flex-wrap: wrap; }
   .header-banner h1 { font-size: 1rem; }
   .header-actions { width: 100%; justify-content: space-between; }
