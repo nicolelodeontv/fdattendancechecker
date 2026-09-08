@@ -214,7 +214,31 @@ export default function Home() {
     <div className="site-wrapper">
       <div className="shell">
         <header className="site-header">
-          <div className="header-banner"><h1>CHAOS FD ATTENDANCE CHECKER</h1><span>{adminMode ? 'ADMIN / CONTROL' : 'FD / ATTENDANCE'}</span></div>
+          <div className="header-banner">
+            <h1>CHAOS FD ATTENDANCE CHECKER</h1>
+            <div className="header-actions">
+              <span>{adminMode ? 'ADMIN / CONTROL' : 'FD / ATTENDANCE'}</span>
+              {!adminAuthed ? (
+                <button className="header-admin-btn" type="button" onClick={() => { setAdminOpen(true); setAdminError(''); }}>
+                  ADMIN ACCESS
+                </button>
+              ) : (
+                <button className="header-admin-btn" type="button" onClick={logoutAdmin}>
+                  LOGOUT ADMIN
+                </button>
+              )}
+            </div>
+          </div>
+          {adminOpen && !adminAuthed && (
+            <form className="header-admin-login" onSubmit={adminLogin}>
+              <div className="password-field">
+                <input type={showAdminPassword ? 'text' : 'password'} value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="Admin password" autoComplete="current-password" />
+                <button className="password-toggle" type="button" aria-label={showAdminPassword ? 'Hide password' : 'Show password'} onClick={() => setShowAdminPassword((show) => !show)}>{showAdminPassword ? 'H' : 'S'}</button>
+              </div>
+              <button className="small-btn" type="submit">UNLOCK</button>
+            </form>
+          )}
+          {adminError && adminOpen && !adminAuthed && <div className="notice danger admin-header-error">{adminError}</div>}
           <div className="server-time-bar"><div className="server-left"><span className="live-dot" /><span className="server-label">Philippine Server Time</span><span className="server-value">{clock}</span></div><span className="server-zone">Asia/Manila · UTC+8</span></div>
         </header>
 
