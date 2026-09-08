@@ -18,15 +18,21 @@ function formatCountdown(ms) {
     : `${String(h).padStart(2, '2')}:${String(m).padStart(2, '2')}:${String(s).padStart(2, '2')}`;
 }
 
-function useManilaClock() {
+function useLocalClock() {
   const [now, setNow] = useState(Date.now());
+  const [timeZone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || 'Local');
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
-  return new Intl.DateTimeFormat('en-PH', {
-    timeZone: 'Asia/Manila', dateStyle: 'medium', timeStyle: 'medium',
-  }).format(now);
+  const formatter = useMemo(() => new Intl.DateTimeFormat(undefined, {
+    dateStyle: 'medium', timeStyle: 'medium', timeZone,
+  }), [timeZone]);
+  const zoneFormatter = useMemo(() => new Intl.DateTimeFormat(undefined, {
+    timeZone, timeZoneName: 'shortOffset', hour: '2-digit', minute: '2-digit',
+  }), [timeZone]);
+  const offset = zoneFormatter.formatToParts(now).find((part) => part.type === 'timeZoneName')?.value || 'Local time';
+  return { text: formatter.format(now), timeZone, offset };
 }
 
 function escapeCsv(value) {
@@ -56,7 +62,7 @@ function exportCsv(entries) {
 }
 
 export default function Home() {
-  const clock = useManilaClock();
+  const clock = useLocalClock();
   const [form, setForm] = useState(EMPTY);
   const [lockedEntry, setLockedEntry] = useState(null);
   const [deadline, setDeadline] = useState(null);
@@ -240,7 +246,7 @@ export default function Home() {
             </form>
           )}
           {adminError && adminOpen && !adminAuthed && <div className="notice danger admin-header-error">{adminError}</div>}
-          <div className="server-time-bar"><div className="server-left"><span className="live-dot" /><span className="server-label">Philippine Server Time</span><span className="server-value">{clock}</span></div><span className="server-zone">Asia/Manila · UTC+8</span></div>
+          <div className="server-time-bar"><div className="server-left"><span className="live-dot" /><span className="server-label">Local Time</span><span className="server-value">{clock.text}</span></div><span className="server-zone">{clock.timeZone} · {clock.offset}</span></div>
         </header>
 
         <main className="content-card">
