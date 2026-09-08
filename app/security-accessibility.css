@@ -132,7 +132,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   outline-offset: 2px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 720px) {
   .responder-layout,
   .admin-layout {
     grid-template-columns: 1fr;
@@ -143,7 +143,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 520px) {
   .site-footer { flex-direction: column; align-items: flex-start; padding-left: 14px; padding-right: 14px; }
   .legal-page { padding: 12px 10px 28px; }
   .legal-card { padding: 22px 18px; }
