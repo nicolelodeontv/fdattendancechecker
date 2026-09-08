@@ -110,16 +110,22 @@ export default function Home() {
   };
 
   async function loadAdminEntries(password = adminPassword) {
-    if (!password) return;
-    const res = await fetch('/api/attendance?admin=1', {
-      headers: { 'x-admin-password': password },
-      cache: 'no-store',
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Unable to refresh responses.');
-    setEntries(data.entries || []);
-    if (data.deadline) setDeadline(data.deadline);
-    return data;
+  if (!password) return;
+  const res = await fetch('/api/attendance?admin=1', {
+  headers: { 'x-admin-password': password },
+  cache: 'no-store',
+  });
+  const data = await res.json();
+  if (res.status === 401) {
+    sessionStorage.removeItem('fd_admin');
+    setAdminPassword('');
+    setAdminAuthed(false);
+    setAdminOpen(true);
+    throw new Error('Your saved admin session expired. Please enter the current password.');
+  }
+  if (!res.ok) throw new Error(data.error || 'Unable to refresh responses.');
+  setEntries(data.entries || []);
+  setDeadline(data.deadline);
   }
 
   useEffect(() => {
@@ -172,13 +178,15 @@ export default function Home() {
   }
 
   async function adminLogin(e) {
-    e.preventDefault(); setAdminError('');
-    try {
-      const res = await fetch('/api/attendance?admin=1', { headers: { 'x-admin-password': adminPassword }, cache: 'no-store' });
+  e.preventDefault(); setAdminError('');
+  const password = adminPassword.trim();
+  if (!password) { setAdminError('Enter the admin password.'); return; }
+  try {
+  const res = await fetch('/api/attendance?admin=1', { headers: { 'x-admin-password': password }, cache: 'no-store' });
       const data = await res.json();
       if (res.status === 401) throw new Error('Incorrect admin password.');
       if (!res.ok) throw new Error(data.error || 'Admin login failed.');
-      setEntries(data.entries || []); setDeadline(data.deadline); setAdminAuthed(true); setAdminOpen(true); sessionStorage.setItem('fd_admin', adminPassword);
+      setEntries(data.entries || []); setDeadline(data.deadline); setAdminPassword(password); setAdminAuthed(true); setAdminOpen(true); sessionStorage.setItem('fd_admin', password);
     } catch (error) { setAdminError(error.message); }
   }
 
