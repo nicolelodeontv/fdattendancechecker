@@ -2,19 +2,6 @@
   "deadline": "2026-09-10T16:00:00.000Z",
   "entries": [
     {
-      "id": "2db32aff-54ea-40ec-8a46-bf7b871ded1a",
-      "ign": "CHAOS KONTOL",
-      "attendance": "attending",
-      "pilot": "have_pilot",
-      "pilotName": "No Pilot",
-      "hours": "7 hours",
-      "notes": "Available all weekend",
-      "submittedAt": "2026-09-08T22:49:51.285Z",
-      "locked": true,
-      "discordId": "712335514245660703",
-      "discordUsername": "mchl"
-    },
-    {
       "id": "056493f1-9da9-4e54-a042-2b82097b38c1",
       "ign": "CHAOS Mango",
       "attendance": "attending",
