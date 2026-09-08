@@ -1,18 +1,4 @@
 {
   "deadline": "2026-09-10T16:00:00.000Z",
-  "entries": [
-    {
-      "id": "01a80e7d-7f0f-4070-a8e0-00a04937823c",
-      "ign": "1",
-      "attendance": "attending",
-      "pilot": "have_pilot",
-      "pilotName": "1",
-      "hours": "1",
-      "notes": "1",
-      "submittedAt": "2026-09-08T07:02:30.517Z",
-      "locked": true,
-      "discordId": "396080330702061588",
-      "discordUsername": "michol"
-    }
-  ]
+  "entries": []
 }
