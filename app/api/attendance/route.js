@@ -5,15 +5,19 @@ const REPO = 'fdattendancechecker';
 const ISSUE_NUMBER = 1;
 const ISSUE_API = `https://api.github.com/repos/${OWNER}/${REPO}/issues/${ISSUE_NUMBER}`;
 const STORE_MARKER = '<!-- FD_ATTENDANCE_STORE -->';
+const GITHUB_HEADERS = {
+  Accept: 'application/vnd.github+json',
+  'X-GitHub-Api-Version': '2022-11-28',
+  'User-Agent': 'fdattendancechecker',
+};
 
 async function githubGet() {
   const token = process.env.GITHUB_TOKEN;
   if (!token) throw new Error('GITHUB_TOKEN is not configured');
   const res = await fetch(ISSUE_API, {
     headers: {
+      ...GITHUB_HEADERS,
       Authorization: `Bearer ${token.trim()}`,
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
     },
     cache: 'no-store',
   });
@@ -45,9 +49,8 @@ async function githubPut(data, message) {
   const res = await fetch(ISSUE_API, {
     method: 'PATCH',
     headers: {
+      ...GITHUB_HEADERS,
       Authorization: `Bearer ${token.trim()}`,
-      Accept: 'application/vnd.github+json',
-      'X-GitHub-Api-Version': '2022-11-28',
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ body }),
