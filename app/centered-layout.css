@@ -1,0 +1,89 @@
+/* Layout enlargement and vertical centering */
+html, body { min-height: 100%; }
+body { min-height: 100vh; }
+.site-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+.shell {
+  width: min(860px, 100%);
+  margin: 0 auto;
+}
+.site-header,
+.content-card {
+  width: 100%;
+}
+.header-banner {
+  min-height: 58px;
+  padding: 14px 20px;
+  gap: 18px;
+}
+.header-banner h1 {
+  font-size: 1.18rem;
+  line-height: 1;
+  gap: 10px;
+}
+.header-banner h1:before {
+  width: 28px;
+  height: 28px;
+  font-size: .9rem;
+}
+.header-actions { gap: 10px; }
+.header-actions>span { font-size: .58rem; }
+.header-admin-btn { height: 30px; padding: 0 12px; font-size: .56rem; }
+.header-admin-login { padding: 11px 16px; gap: 10px; }
+.header-admin-login input { height: 36px; padding: 8px 10px; font-size: .68rem; }
+.password-toggle { height: 30px; width: 32px; font-size: .68rem; }
+.server-time-bar { padding: 8px 16px; gap: 14px; }
+.server-label { font-size: .5rem; }
+.server-value, .server-zone { font-size: .52rem; }
+
+.card-heading { padding: 28px 28px 12px; }
+.eyebrow { font-size: .62rem; gap: 9px; }
+.eyebrow:before, .eyebrow:after { width: 42px; }
+.card-heading h2 { font-size: 2rem; }
+.card-heading p { max-width: 620px; font-size: .72rem; line-height: 1.55; }
+.deadline { margin: 12px 28px 18px; padding: 13px 15px; gap: 14px; }
+.deadline-copy { font-size: .62rem; }
+.deadline-time { font-size: .82rem; }
+.form { padding: 0 28px 28px; }
+.field { margin-top: 14px; }
+.field label { margin-bottom: 6px; font-size: .58rem; }
+.field input, .field textarea { min-height: 42px; padding: 9px 11px; font-size: .7rem; }
+.field textarea { min-height: 92px; }
+.grid-2 { gap: 12px; }
+.choices { gap: 8px; }
+.choice label { min-height: 40px; padding: 8px 10px; gap: 7px; font-size: .64rem; }
+.choice .icon { font-size: .82rem; }
+.submit-row { margin-top: 18px; }
+.submit, a.submit[href="/api/auth/discord/login"] { height: 44px; font-size: .64rem; }
+.notice { margin-top: 12px; padding: 11px 12px; font-size: .62rem; }
+
+.admin { padding: 20px 28px 22px; }
+.admin-head h3 { font-size: .82rem; }
+.admin-sub { font-size: .5rem; }
+.small-btn { height: 31px; padding: 0 11px; font-size: .56rem; }
+.admin-results { margin: 16px 28px 0; }
+
+@media (max-width: 700px) {
+  .site-wrapper { align-items: flex-start; padding: 18px 12px 28px; }
+  .shell { width: min(100%, 620px); }
+  .header-banner { flex-wrap: wrap; }
+  .header-banner h1 { font-size: 1rem; }
+  .header-actions { width: 100%; justify-content: space-between; }
+  .card-heading h2 { font-size: 1.72rem; }
+  .card-heading, .form { padding-left: 20px; padding-right: 20px; }
+  .deadline, .admin-results { margin-left: 20px; margin-right: 20px; }
+}
+
+@media (max-width: 520px) {
+  .site-wrapper { padding-left: 8px; padding-right: 8px; }
+  .shell { width: 100%; }
+  .card-heading h2 { font-size: 1.5rem; }
+  .card-heading p { font-size: .64rem; }
+  .grid-2 { grid-template-columns: 1fr; }
+  .server-time-bar { align-items: flex-start; flex-direction: column; gap: 4px; }
+}
