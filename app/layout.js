@@ -1,4 +1,5 @@
 import './globals.css';
+import './centered-layout.css';
 
 export const metadata = {
   title: 'FD Attendance Check Tracker',
