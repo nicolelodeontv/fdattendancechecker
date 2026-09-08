@@ -2,7 +2,6 @@ import './globals.css';
 import './centered-layout.css';
 import './security-accessibility.css';
 import Link from 'next/link';
-import SiteEnhancements from './components/SiteEnhancements';
 
 export const metadata = {
   metadataBase: new URL('https://fdattendancechecker.vercel.app'),
@@ -42,7 +41,6 @@ export default function RootLayout({ children }) {
             <Link href="/terms">Terms &amp; Conditions</Link>
           </nav>
         </footer>
-        <SiteEnhancements />
       </body>
     </html>
   );
