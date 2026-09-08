@@ -331,14 +331,44 @@ export default function Home() {
   );
 }
 
-function ChoiceGroup({ title, name, value, disabled, options, onChange }) {
-  return <div className="field"><label>{title} <span className="required">*</span></label><div className="choices">{options.map(([valueOption, text], index) => <div className="choice" key={valueOption}><input id={`${name}-${index}`} type="radio" name={name} checked={value === valueOption} onChange={() => onChange(valueOption)} disabled={disabled} /><label htmlFor={`${name}-${index}`}>{text}</label></div>)}</div></div>;
-}
-
 function AdminEntry({ entry, onSave, onDelete }) {
   const [draft, setDraft] = useState({ ...entry });
   const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+  useEffect(() => setDraft({ ...entry }), [entry]);
   const update = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
-  const handleSave = async () => { setSaving(true); try { await onSave(draft); } finally { setSaving(false); } };
-  return <div className="entry admin-entry"><div className="entry-top"><div><div className="entry-ign">{entry.ign}</div><div className="admin-discord-account">DISCORD: <b>{entry.discordUsername || 'ADMIN CREATED'}</b>{entry.discordId && <span className="admin-discord-id"> · ID {entry.discordId}</span>}</div></div><span className={`badge ${entry.locked ? 'danger' : 'good'}`}>{entry.locked ? 'LOCKED' : 'UNLOCKED'}</span></div><div className="entry-fields"><input value={draft.ign} onChange={(e) => update('ign', e.target.value)} placeholder="IGN" /><select value={draft.attendance} onChange={(e) => update('attendance', e.target.value)}><option value="attending">✅ ATTENDING</option><option value="not_attending">❌ NOT ATTENDING</option></select><select value={draft.pilot} onChange={(e) => update('pilot', e.target.value)}><option value="have_pilot">✅ HAVE PILOT</option><option value="no_pilot">✅ NO PILOT</option></select><input value={draft.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" /><input value={draft.hours} onChange={(e) => update('hours', e.target.value)} placeholder="Hours" /><textarea value={draft.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Notes" /></div><div className="admin-entry-actions"><button className="small-btn" type="button" onClick={handleSave} disabled={saving}>{saving ? 'SAVING…' : 'SAVE'}</button><button className="small-btn danger-btn" type="button" onClick={() => onDelete(entry.id)}>DELETE</button></div></div>;
+  async function save() {
+    setSaving(true); setMessage('');
+    try {
+      if (!draft.ign.trim() || !draft.attendance || !draft.pilot || (draft.pilot === 'have_pilot' && !draft.pilotName.trim())) throw new Error('Please complete the required fields.');
+      await onSave(draft); setMessage('Saved.');
+    } catch (error) { setMessage(error.message); }
+    finally { setSaving(false); }
+  }
+  return (
+    <article className="admin-entry">
+      <div className="entry-top"><div className="entry-ign">{entry.ign}</div><div className="badge-row"><span className={`badge ${entry.locked ? 'danger' : 'good'}`}>{entry.locked ? '🔒 LOCKED' : '🔓 UNLOCKED'}</span></div></div>
+      <div className="admin-entry-grid"><div className="field"><label>IGN</label><input value={draft.ign} onChange={(e) => update('ign', e.target.value)} /></div><ChoiceGroup title="Attendance" name={`attendance-${entry.id}`} value={draft.attendance} disabled={saving} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} /><ChoiceGroup title="Pilot" name={`pilot-${entry.id}`} value={draft.pilot} disabled={saving} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' No Pilot']]} onChange={(value) => update('pilot', value)} /></div>
+      <div className="admin-entry-grid"><div className="field"><label>Pilot Name</label><input value={draft.pilotName} onChange={(e) => update('pilotName', e.target.value)} /></div><div className="field"><label>Hours</label><input value={draft.hours} onChange={(e) => update('hours', e.target.value)} /></div></div>
+      <div className="field"><label>Notes</label><textarea value={draft.notes} onChange={(e) => update('notes', e.target.value)} /></div>
+      <div className="admin-entry-actions"><button className="small-btn" type="button" onClick={save} disabled={saving}>{saving ? 'SAVING…' : 'SAVE CHANGES'}</button><button className="small-btn danger-btn" type="button" onClick={() => onDelete(entry.id)}>DELETE</button></div>
+      {message && <div className={`notice ${message === 'Saved.' ? 'good' : 'danger'}`}>{message}</div>}
+    </article>
+  );
+}
+
+function ChoiceGroup({ title, name, value, disabled, options, onChange }) {
+  return (
+    <div className="field">
+      <label>{title} <span className="required">*</span></label>
+      <div className="choices">
+        {options.map(([valueOption, text], index) => (
+          <div className="choice" key={valueOption}>
+            <input id={`${name}-${index}`} type="radio" name={name} checked={value === valueOption} onChange={() => onChange(valueOption)} disabled={disabled} />
+            <label htmlFor={`${name}-${index}`}>{text}</label>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
