@@ -7,21 +7,32 @@ export default function PostSubmissionControls() {
   const [rankings, setRankings] = useState([]);
 
   useEffect(() => {
-    if (window.location.pathname !== '/') return;
+    if (window.location.pathname !== '/') return undefined;
 
     let active = true;
-    fetch('/api/attendance', { cache: 'no-store' })
-      .then((res) => res.json())
-      .then((data) => {
-        if (!active || !data.entry) return;
-        setEntry(data.entry);
-        setRankings(data.attendingRankings || []);
-        document.body.classList.add('post-submission-active');
-      })
-      .catch(() => {});
+    const refresh = async () => {
+      try {
+        const res = await fetch('/api/attendance', { cache: 'no-store' });
+        const data = await res.json();
+        if (!active) return;
+        if (data.entry) {
+          setEntry(data.entry);
+          setRankings(data.attendingRankings || []);
+          document.body.classList.add('post-submission-active');
+        } else {
+          setEntry(null);
+          setRankings(data.attendingRankings || []);
+          document.body.classList.remove('post-submission-active');
+        }
+      } catch {}
+    };
+
+    refresh();
+    const interval = window.setInterval(refresh, 1000);
 
     return () => {
       active = false;
+      window.clearInterval(interval);
       document.body.classList.remove('post-submission-active');
     };
   }, []);
