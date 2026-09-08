@@ -25,12 +25,8 @@ function useLocalClock() {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
-  const formatter = useMemo(() => new Intl.DateTimeFormat(undefined, {
-    dateStyle: 'medium', timeStyle: 'medium', timeZone,
-  }), [timeZone]);
-  const zoneFormatter = useMemo(() => new Intl.DateTimeFormat(undefined, {
-    timeZone, timeZoneName: 'shortOffset', hour: '2-digit', minute: '2-digit',
-  }), [timeZone]);
+  const formatter = useMemo(() => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'medium', timeZone }), [timeZone]);
+  const zoneFormatter = useMemo(() => new Intl.DateTimeFormat(undefined, { timeZone, timeZoneName: 'shortOffset', hour: '2-digit', minute: '2-digit' }), [timeZone]);
   const offset = zoneFormatter.formatToParts(now).find((part) => part.type === 'timeZoneName')?.value || 'Local time';
   return { text: formatter.format(now), timeZone, offset };
 }
@@ -42,16 +38,7 @@ function escapeCsv(value) {
 
 function exportCsv(entries) {
   const headers = ['IGN', 'Discord Account', 'Discord ID', 'Attendance', 'Pilot', 'Pilot Name', 'Hours', 'Notes', 'Submitted At (PH)', 'Locked'];
-  const rows = entries.map((x) => [
-    x.ign,
-    x.discordUsername || 'Admin-created',
-    x.discordId || '',
-    x.attendance === 'attending' ? 'Attending' : 'Not Attending',
-    x.pilot === 'have_pilot' ? 'Have Pilot' : 'No Pilot',
-    x.pilotName, x.hours, x.notes,
-    x.submittedAt ? new Date(x.submittedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' }) : '',
-    x.locked ? 'Yes' : 'No',
-  ]);
+  const rows = entries.map((x) => [x.ign, x.discordUsername || 'Admin-created', x.discordId || '', x.attendance === 'attending' ? 'Attending' : 'Not Attending', x.pilot === 'have_pilot' ? 'Have Pilot' : 'No Pilot', x.pilotName, x.hours, x.notes, x.submittedAt ? new Date(x.submittedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' }) : '', x.locked ? 'Yes' : 'No']);
   const csv = [headers, ...rows].map((row) => row.map(escapeCsv).join(',')).join('\r\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -105,10 +92,7 @@ export default function Home() {
 
   async function loadAdminEntries(password = adminPassword) {
     if (!password) return;
-    const res = await fetch('/api/attendance?admin=1', {
-      headers: { 'x-admin-password': password },
-      cache: 'no-store',
-    });
+    const res = await fetch('/api/attendance?admin=1', { headers: { 'x-admin-password': password }, cache: 'no-store' });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Unable to refresh responses.');
     setEntries(data.entries || []);
@@ -153,17 +137,24 @@ export default function Home() {
       const res = await fetch('/api/attendance', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Submission failed.');
-      setSubmitPopup({ ign: data.entry?.ign || form.ign.trim() });
-      await logoutDiscord();
-      setMessage('Response submitted and locked. You have also been logged out of Discord.');
+
+      // The POST endpoint clears the responder's Discord session atomically
+      // after the response is successfully saved. Clear only responder UI state
+      // here; admin authentication is kept completely separate.
+      localStorage.removeItem('fd_attendance_entry');
+      setDiscordUser(null);
+      setLockedEntry(null);
+      setForm(EMPTY);
       setDeadline(data.deadline);
+      setMessage('Response submitted successfully. You have been logged out of Discord.');
+      setSubmitPopup({ ign: data.entry?.ign || form.ign.trim() });
     } catch (error) { setMessage(error.message); }
   }
 
   async function logoutDiscord() {
     await fetch('/api/auth/discord/me', { method: 'DELETE' }).catch(() => {});
     localStorage.removeItem('fd_attendance_entry');
-    setDiscordUser(null); setLockedEntry(null); setForm(EMPTY);
+    setDiscordUser(null); setLockedEntry(null); setForm(EMPTY); setMessage('Logged out of Discord.');
   }
 
   async function adminLogin(e) {
@@ -215,7 +206,6 @@ export default function Home() {
     sessionStorage.removeItem('fd_admin'); setAdminPassword(''); setAdminAuthed(false); setAdminOpen(false); setEntries([]); setAdminError(''); setMessage(''); setDeleteTarget(null); setDeleteMessage('');
   }
 
-  // Only a verified admin session can open the admin panel.
   const adminMode = adminAuthed;
 
   return (
@@ -226,15 +216,7 @@ export default function Home() {
             <h1>CHAOS FD ATTENDANCE CHECKER</h1>
             <div className="header-actions">
               <span>{adminMode ? 'ADMIN / CONTROL' : 'FD / ATTENDANCE'}</span>
-              {!adminAuthed ? (
-                <button className="header-admin-btn" type="button" onClick={() => { setAdminOpen(true); setAdminError(''); }}>
-                  ADMIN ACCESS
-                </button>
-              ) : (
-                <button className="header-admin-btn" type="button" onClick={logoutAdmin}>
-                  LOGOUT ADMIN
-                </button>
-              )}
+              {!adminAuthed ? <button className="header-admin-btn" type="button" onClick={() => { setAdminOpen(true); setAdminError(''); }}>ADMIN ACCESS</button> : <button className="header-admin-btn" type="button" onClick={logoutAdmin}>LOGOUT ADMIN</button>}
             </div>
           </div>
           {adminOpen && !adminAuthed && (
@@ -265,25 +247,20 @@ export default function Home() {
               )}
 
               {discordUser && !lockedEntry && (
-                <div className="form">
-                  <div className="notice good"><b>DISCORD:</b> {discordUser.username || 'Authenticated'} <button type="button" className="small-btn" style={{ float: 'right', marginTop: -4 }} onClick={logoutDiscord}>LOGOUT</button></div>
-                </div>
+                <div className="form"><div className="notice good"><b>DISCORD:</b> {discordUser.username || 'Authenticated'} <button type="button" className="small-btn" style={{ float: 'right', marginTop: -4 }} onClick={logoutDiscord}>LOGOUT</button></div></div>
               )}
 
               {discordUser && !lockedEntry ? (
                 <form className="form" onSubmit={submit}>
                   <div className="field"><label>IGN <span className="required">*</span></label><input value={form.ign} onChange={(e) => update('ign', e.target.value)} placeholder="CHAOS Michol" /></div>
                   <div className="grid-2"><ChoiceGroup title="Attendance" name="attendance" value={form.attendance} disabled={false} options={[["attending", ICONS.yes + ' Attending'], ["not_attending", ICONS.no + ' Not Attending']]} onChange={(value) => update('attendance', value)} /><ChoiceGroup title="Pilot" name="pilot" value={form.pilot} disabled={false} options={[["have_pilot", ICONS.yes + ' Have Pilot'], ["no_pilot", ICONS.no + ' Not Attending']]} onChange={(value) => update('pilot', value)} /></div>
-                  <div className="grid-2"><div className="field"><label>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label><input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div><div className="field"><label>Hours</label><input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" style={{ position: 'relative', zIndex: 60, pointerEvents: 'auto' }} /></div></div>
+                  <div className="grid-2"><div className="field"><label>Pilot Name <span className="required">{form.pilot === 'have_pilot' ? '*' : ''}</span></label><input value={form.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" /></div><div className="field"><label>Hours</label><input value={form.hours} onChange={(e) => update('hours', e.target.value)} placeholder="e.g. 14" /></div></div>
                   <div className="field"><label>Notes <span>(optional)</span></label><textarea value={form.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Anything we should know?" /></div>
                   <div className="submit-row"><button className="submit" type="submit" disabled={closed}>SUBMIT RESPONSE</button></div>
-                  {message && <div className={`notice ${message.includes('submitted') ? 'good' : 'danger'}`}>{message}</div>}
+                  {message && <div className={`notice ${message.includes('submitted successfully') ? 'good' : 'danger'}`}>{message}</div>}
                 </form>
               ) : lockedEntry ? (
-                <div className="form">
-                  <div className="notice good"><span className="lock">{ICONS.lock}</span> Your response is locked after submission. This lock is tied to your Discord account.</div>
-                  <div className="entry" style={{ marginTop: 10 }}><div className="entry-top"><div className="entry-ign">{lockedEntry.ign}</div><span className="badge info">SUBMITTED {new Date(lockedEntry.submittedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}</span></div><div className="badge-row"><span className={`badge ${lockedEntry.attendance === 'attending' ? 'good' : 'danger'}`}>{lockedEntry.attendance === 'attending' ? ICONS.yes : ICONS.no} {lockedEntry.attendance === 'attending' ? 'ATTENDING' : 'NOT ATTENDING'}</span><span className="badge info">{lockedEntry.pilot === 'have_pilot' ? ICONS.yes : ICONS.no} {lockedEntry.pilot === 'have_pilot' ? `PILOT: ${lockedEntry.pilotName}` : 'NO PILOT'}</span><span className="badge info">{lockedEntry.hours ? `${lockedEntry.hours} HRS` : 'HOURS: —'}</span></div>{lockedEntry.notes && <div className="entry-notes">{lockedEntry.notes}</div>}</div>
-                </div>
+                <div className="form"><div className="notice good"><span className="lock">{ICONS.lock}</span> Your response is locked after submission. This lock is tied to your Discord account.</div><div className="entry" style={{ marginTop: 10 }}><div className="entry-top"><div className="entry-ign">{lockedEntry.ign}</div><span className="badge info">SUBMITTED {new Date(lockedEntry.submittedAt).toLocaleString('en-PH', { timeZone: 'Asia/Manila' })}</span></div><div className="badge-row"><span className={`badge ${lockedEntry.attendance === 'attending' ? 'good' : 'danger'}`}>{lockedEntry.attendance === 'attending' ? ICONS.yes : ICONS.no} {lockedEntry.attendance === 'attending' ? 'ATTENDING' : 'NOT ATTENDING'}</span><span className="badge info">{lockedEntry.pilot === 'have_pilot' ? ICONS.yes : ICONS.no} {lockedEntry.pilot === 'have_pilot' ? `PILOT: ${lockedEntry.pilotName}` : 'NO PILOT'}</span><span className="badge info">{lockedEntry.hours ? `${lockedEntry.hours} HRS` : 'HOURS: —'}</span></div>{lockedEntry.notes && <div className="entry-notes">{lockedEntry.notes}</div>}</div></div>
               ) : null}
             </>
           )}
@@ -292,13 +269,7 @@ export default function Home() {
             <section className="admin-panel">
               <div className="card-heading"><div className="eyebrow">ADMIN CONTROL</div><h2>Final Day Responses</h2><p>Manage attendance responses, add entries manually, export CSV, and remove responses when needed.</p></div>
               <AdminResponseForm deadline={deadline} adminPassword={adminPassword} onCreated={(entry) => setEntries((old) => [...old, entry])} onResetLocked={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))} />
-              <div className="admin-results">
-                <div className="admin-results-head"><div><div className="eyebrow">RESPONSE LIST</div><h3>{entries.length} RESPONSE{entries.length === 1 ? '' : 'S'}</h3></div><div className="admin-results-actions"><button className="small-btn" type="button" onClick={() => exportCsv(entries)}>EXPORT CSV</button><button className="small-btn" type="button" onClick={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))}>REFRESH</button></div></div>
-                {deleteMessage && <div className={`notice ${deleteMessage.includes('successfully') ? 'good' : 'danger'}`}>{deleteMessage}</div>}
-                <div className="entry-list">
-                  {entries.length === 0 ? <div className="empty-state">No responses yet.</div> : entries.map((entry) => <AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry} />)}
-                </div>
-              </div>
+              <div className="admin-results"><div className="admin-results-head"><div><div className="eyebrow">RESPONSE LIST</div><h3>{entries.length} RESPONSE{entries.length === 1 ? '' : 'S'}</h3></div><div className="admin-results-actions"><button className="small-btn" type="button" onClick={() => exportCsv(entries)}>EXPORT CSV</button><button className="small-btn" type="button" onClick={() => loadAdminEntries().catch((error) => setDeleteMessage(error.message))}>REFRESH</button></div></div>{deleteMessage && <div className={`notice ${deleteMessage.includes('successfully') ? 'good' : 'danger'}`}>{deleteMessage}</div>}<div className="entry-list">{entries.length === 0 ? <div className="empty-state">No responses yet.</div> : entries.map((entry) => <AdminEntry key={entry.id} entry={entry} onSave={saveEntry} onDelete={deleteEntry} />)}</div></div>
             </section>
           )}
         </main>
@@ -307,7 +278,7 @@ export default function Home() {
       {submitPopup && (
         <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget) setSubmitPopup(null); }}>
           <div className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="submit-modal-title">
-            <div className="eyebrow">RESPONSE SUBMITTED</div><h2 id="submit-modal-title">SUCCESS</h2><div className="notice good">✅ <b>{submitPopup.ign}</b> was submitted successfully.</div><p>Your response is now <b>🔒 LOCKED</b> and your Discord session has been logged out.</p><div className="confirm-actions"><button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button></div>
+            <div className="eyebrow">RESPONSE SUBMITTED</div><h2 id="submit-modal-title">SUCCESS</h2><div className="notice good">✅ <b>{submitPopup.ign}</b> was submitted successfully.</div><p>Your response is now <b>🔒 LOCKED</b> and you have been <b>logged out of Discord</b>.</p><div className="confirm-actions"><button className="small-btn" type="button" onClick={() => setSubmitPopup(null)}>CLOSE</button></div>
           </div>
         </div>
       )}
@@ -324,14 +295,7 @@ export default function Home() {
 }
 
 function ChoiceGroup({ title, name, value, disabled, options, onChange }) {
-  return (
-    <div className="field">
-      <label>{title} <span className="required">*</span></label>
-      <div className="choices">
-        {options.map(([valueOption, text], index) => <div className="choice" key={valueOption}><input id={`${name}-${index}`} type="radio" name={name} checked={value === valueOption} onChange={() => onChange(valueOption)} disabled={disabled} /><label htmlFor={`${name}-${index}`}>{text}</label></div>)}
-      </div>
-    </div>
-  );
+  return <div className="field"><label>{title} <span className="required">*</span></label><div className="choices">{options.map(([valueOption, text], index) => <div className="choice" key={valueOption}><input id={`${name}-${index}`} type="radio" name={name} checked={value === valueOption} onChange={() => onChange(valueOption)} disabled={disabled} /><label htmlFor={`${name}-${index}`}>{text}</label></div>)}</div></div>;
 }
 
 function AdminEntry({ entry, onSave, onDelete }) {
@@ -339,18 +303,5 @@ function AdminEntry({ entry, onSave, onDelete }) {
   const [saving, setSaving] = useState(false);
   const update = (key, value) => setDraft((current) => ({ ...current, [key]: value }));
   const handleSave = async () => { setSaving(true); try { await onSave(draft); } finally { setSaving(false); } };
-  return (
-    <div className="entry admin-entry">
-      <div className="entry-top"><div><div className="entry-ign">{entry.ign}</div><div className="admin-discord-account">DISCORD: <b>{entry.discordUsername || 'ADMIN CREATED'}</b>{entry.discordId && <span className="admin-discord-id"> · ID {entry.discordId}</span>}</div></div><span className={`badge ${entry.locked ? 'danger' : 'good'}`}>{entry.locked ? 'LOCKED' : 'UNLOCKED'}</span></div>
-      <div className="entry-fields">
-        <input value={draft.ign} onChange={(e) => update('ign', e.target.value)} placeholder="IGN" />
-        <select value={draft.attendance} onChange={(e) => update('attendance', e.target.value)}><option value="attending">✅ ATTENDING</option><option value="not_attending">❌ NOT ATTENDING</option></select>
-        <select value={draft.pilot} onChange={(e) => update('pilot', e.target.value)}><option value="have_pilot">✅ HAVE PILOT</option><option value="no_pilot">❌ NO PILOT</option></select>
-        <input value={draft.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" />
-        <input value={draft.hours} onChange={(e) => update('hours', e.target.value)} placeholder="Hours" />
-        <textarea value={draft.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Notes" />
-      </div>
-      <div className="admin-entry-actions"><button className="small-btn" type="button" onClick={handleSave} disabled={saving}>{saving ? 'SAVING…' : 'SAVE'}</button><button className="small-btn danger-btn" type="button" onClick={() => onDelete(entry.id)}>DELETE</button></div>
-    </div>
-  );
+  return <div className="entry admin-entry"><div className="entry-top"><div><div className="entry-ign">{entry.ign}</div><div className="admin-discord-account">DISCORD: <b>{entry.discordUsername || 'ADMIN CREATED'}</b>{entry.discordId && <span className="admin-discord-id"> · ID {entry.discordId}</span>}</div></div><span className={`badge ${entry.locked ? 'danger' : 'good'}`}>{entry.locked ? 'LOCKED' : 'UNLOCKED'}</span></div><div className="entry-fields"><input value={draft.ign} onChange={(e) => update('ign', e.target.value)} placeholder="IGN" /><select value={draft.attendance} onChange={(e) => update('attendance', e.target.value)}><option value="attending">✅ ATTENDING</option><option value="not_attending">❌ NOT ATTENDING</option></select><select value={draft.pilot} onChange={(e) => update('pilot', e.target.value)}><option value="have_pilot">✅ HAVE PILOT</option><option value="no_pilot">❌ NO PILOT</option></select><input value={draft.pilotName} onChange={(e) => update('pilotName', e.target.value)} placeholder="Pilot IGN" /><input value={draft.hours} onChange={(e) => update('hours', e.target.value)} placeholder="Hours" /><textarea value={draft.notes} onChange={(e) => update('notes', e.target.value)} placeholder="Notes" /></div><div className="admin-entry-actions"><button className="small-btn" type="button" onClick={handleSave} disabled={saving}>{saving ? 'SAVING…' : 'SAVE'}</button><button className="small-btn danger-btn" type="button" onClick={() => onDelete(entry.id)}>DELETE</button></div></div>;
 }
