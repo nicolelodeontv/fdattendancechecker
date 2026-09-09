@@ -1,0 +1,106 @@
+/* FORCE UI STABILITY */
+*,*::before,*::after{box-sizing:border-box}
+html{font-size:16px}
+body{font-size:16px;line-height:1.45;overflow-x:hidden}
+button,input,textarea,select{font:inherit;max-width:100%}
+button{white-space:normal;line-height:1.15}
+.shell,.site-wrapper,.content-card,.admin,.responder-layout,.admin-layout,.command-dashboard,.command-ranking-panel,.admin-results{min-width:0}
+.shell{width:min(1120px,calc(100% - 32px));margin-inline:auto}
+.content-card{overflow:visible}
+.header-banner,.header-actions,.admin-head,.admin-head-actions,.command-title-row,.command-section-head,.admin-results-head,.admin-results-actions,.submit-row{min-width:0}
+.header-banner{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.header-banner>*,.header-actions>*{min-width:0}
+.header-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px}
+.header-actions>span{white-space:normal;text-align:right}
+.card-heading h2,.card-heading p,.deadline-copy,.deadline-time,.admin-sub,.notice,.entry-ign,.entry-meta,.entry-notes,.command-stat-value,.command-stat-label,.command-ranking-meta,.ranking-position,.ranking-ign,.ranking-status,.ranking-hours,.command-deadline span,.command-deadline b,.warning-chip,.good-chip{overflow-wrap:anywhere;word-break:break-word}
+.card-heading h2{max-width:100%}
+.card-heading p{max-width:100%}
+.deadline{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.deadline-copy{min-width:0;flex:1 1 260px}
+.deadline-time{flex:0 1 auto}
+.responder-layout{grid-template-columns:minmax(0,1fr) minmax(320px,.82fr);gap:18px}
+.responder-main,.responder-ranking{min-width:0;width:100%}
+.form,.grid-2,.choices,.field,.choice{min-width:0}
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.choice label{width:100%;min-width:0;white-space:normal;text-align:left}
+.submit-row{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch}
+.submit-row>*{min-width:0;flex:1 1 180px}
+.submit,.submit-row .submit{width:100%;max-width:100%;white-space:normal}
+.notice:has(.small-btn){display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.notice:has(.small-btn)>*:first-child{min-width:0;flex:1 1 220px}
+.notice:has(.small-btn) .small-btn{flex:0 0 auto}
+.admin-head{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px}
+.admin-head>*,.admin-head-actions>*{min-width:0}
+.admin-head-actions{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
+.small-btn,.reset-locked-btn,.reset-all-btn,.command-collapse-btn,.command-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:0;min-height:36px;padding:7px 12px;white-space:normal;text-align:center;flex:0 1 auto}
+.admin-reset-actions{display:flex;flex-wrap:wrap;gap:10px}
+.admin-reset-select-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;min-width:0}
+.reset-response-select,.small-select{min-width:0;width:100%;max-width:100%}
+.admin-results-head{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.admin-results-actions{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto;min-width:0}
+.command-dashboard{width:100%;clear:both}
+.command-title-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.command-title-row>div{min-width:0;flex:1 1 240px}
+.command-live{flex:0 0 auto;white-space:normal;text-align:right}
+.command-dashboard .command-stats,.command-admin-summary,.ranking-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.command-dashboard .command-admin-summary{grid-template-columns:repeat(3,minmax(0,1fr))}
+.command-stat{min-width:0;overflow:hidden}
+.command-stat-value{display:block;white-space:normal;line-height:1.15}
+.command-ranking-panel{min-width:0}
+.command-ranking-panel .ranking-heading{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px}
+.command-ranking-panel .ranking-heading>div:first-child{min-width:0;flex:1 1 220px}
+.command-ranking-meta{white-space:normal;text-align:right;flex:0 1 auto}
+.command-leaderboard-list{min-width:0}
+.command-scroll-panel{overflow-x:hidden}
+.command-ranking-panel .ranking-item{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(86px,.8fr) minmax(80px,auto);gap:10px;align-items:center;min-width:0}
+.command-ranking-panel .ranking-item>*{min-width:0}
+.ranking-position{white-space:nowrap}
+.ranking-ign{white-space:normal;overflow-wrap:anywhere}
+.ranking-status{white-space:normal;overflow-wrap:anywhere;text-align:right}
+.ranking-hours{white-space:normal;overflow-wrap:anywhere;text-align:right}
+.command-filter-toolbar{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(160px,1fr) minmax(160px,1fr);gap:10px;min-width:0}
+.command-filter-toolbar>*{min-width:0;width:100%;max-width:100%}
+.command-response-toolbar{margin:0!important}
+.command-response-toolbar input,.command-response-toolbar select{min-height:42px}
+.command-warnings{display:flex;flex-wrap:wrap;gap:8px}
+.warning-chip,.good-chip{max-width:100%;white-space:normal}
+.command-readiness>div:first-child{display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+.command-readiness>div:first-child>*{min-width:0}
+.command-deadline{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px}
+.command-deadline span{flex:1 1 160px}
+.command-deadline b{flex:1 1 240px;text-align:right;white-space:normal}
+.command-admin-entry{min-width:0}
+.command-admin-entry .entry-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-width:0}
+.command-admin-entry .entry-top>*{min-width:0}
+.command-collapse-btn{margin-left:auto;flex:0 1 auto}
+.admin-results .entry-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-width:0}
+.admin-results .entry-list .admin-entry{margin:0;min-width:0}
+.admin-results .entry-list .admin-entry[hidden]{display:none}
+/* Mini Burn is intentionally gone. Guard against stale markup/cache. */
+.command-mini-burn,.mini-burn-list,.mini-burn-row,.mini-burn-remove{display:none!important}
+@media(max-width:760px){
+  .shell{width:min(100%,calc(100% - 20px))}
+  .site-wrapper{padding-inline:10px}
+  .responder-layout{grid-template-columns:1fr;gap:14px;padding-inline:14px}
+  .responder-ranking{display:block}
+  .command-dashboard .command-stats,.command-dashboard .command-admin-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .command-filter-toolbar{grid-template-columns:1fr}
+  .admin-results .entry-list{grid-template-columns:1fr}
+}
+@media(max-width:520px){
+  .shell{width:100%}
+  .site-wrapper{padding-inline:8px}
+  .header-banner{padding-inline:12px}
+  .header-actions{width:100%;justify-content:flex-start}
+  .header-actions>span{text-align:left}
+  .grid-2{grid-template-columns:1fr}
+  .command-dashboard .command-stats,.command-dashboard .command-admin-summary,.ranking-summary{grid-template-columns:1fr 1fr}
+  .command-ranking-panel .ranking-item{grid-template-columns:34px minmax(0,1fr) auto;gap:7px}
+  .command-ranking-panel .ranking-status{display:none}
+  .ranking-hours{text-align:right}
+  .admin-reset-select-row{grid-template-columns:1fr}
+  .admin-head-actions,.admin-results-actions{width:100%;margin-left:0}
+  .admin-head-actions>* ,.admin-results-actions>*{flex:1 1 120px}
+  .notice:has(.small-btn) .small-btn{width:100%;flex:1 1 100%}
+  .command-deadline b{text-align:left}
+}
