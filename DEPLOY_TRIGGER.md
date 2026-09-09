@@ -1,8 +1,8 @@
 Production deployment trigger for the FD Attendance Checker production refresh.
 
 Latest deployment source: main
-Latest verified source commit: 9dcf90cd1932dde3daeef23da42b8d65f3281f46
+Latest verified source commit: 5d9c2c9b118537c3b72c62bcc28075bd2d1d1c06
 
-UI cleanup: Mini Burn removed completely; typography, wrapping, spacing, and button layouts hardened against collisions.
+UI cleanup: RESPONSE LIST headers, badges, text, filters, and action buttons now use isolated responsive layout rules to prevent collisions.
 
-Forced production deployment verification: 2026-09-09 13:18 Asia/Manila
+Forced RESPONSE LIST production deployment verification: 2026-09-09 13:22 Asia/Manila
