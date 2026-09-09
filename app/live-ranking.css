@@ -1,0 +1,30 @@
+.ranking-list {
+  max-height: 280px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 8px 0 9px;
+  scrollbar-width: thin;
+  scrollbar-color: #6f350f #100a06;
+}
+
+.ranking-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ranking-list::-webkit-scrollbar-track {
+  background: #100a06;
+  border-left: 1px solid #2f180b;
+}
+
+.ranking-list::-webkit-scrollbar-thumb {
+  background: #6f350f;
+  border-radius: 4px;
+}
+
+.ranking-list::-webkit-scrollbar-thumb:hover {
+  background: #9a4d13;
+}
+
+.ranking-item {
+  min-height: 34px;
+}
