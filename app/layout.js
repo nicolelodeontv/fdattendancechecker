@@ -1,6 +1,7 @@
 import './globals.css';
 import './centered-layout.css';
 import './security-accessibility.css';
+import './live-ranking.css';
 
 export const metadata = {
   metadataBase: new URL('https://fdattendancechecker.vercel.app'),
