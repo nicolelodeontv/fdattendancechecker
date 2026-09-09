@@ -85,6 +85,17 @@ body { min-height: 100vh; }
   margin-right: auto;
 }
 
+/* Keep the admin response list compact instead of creating a very long page. */
+.admin-results .entry-list {
+  max-height: min(620px, 68vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.admin-results .entry-list::-webkit-scrollbar { width: 6px; }
+.admin-results .entry-list::-webkit-scrollbar-thumb { background: #4b250f; border-radius: 4px; }
+.admin-results .entry-list::-webkit-scrollbar-track { background: #0c0705; }
+
 @media (max-width: 700px) {
   .site-wrapper { align-items: flex-start; padding: 18px 12px 28px; }
   .shell { width: 100%; max-width: none; }
@@ -94,6 +105,7 @@ body { min-height: 100vh; }
   .card-heading h2 { font-size: 1.72rem; }
   .card-heading, .form { padding-left: 20px; padding-right: 20px; }
   .deadline, .admin-results { margin-left: 20px; margin-right: 20px; }
+  .admin-results .entry-list { max-height: 62vh; }
 }
 
 @media (max-width: 520px) {
