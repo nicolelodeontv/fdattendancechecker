@@ -40,8 +40,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <CommandCenterEnhancements />
         {children}
+        <CommandCenterEnhancements />
         <footer className="site-footer">
           <span>CHAOS FD Attendance Checker</span>
           <span>Created by <a href="https://discord.com/users/396080330702061588" target="_blank" rel="noopener noreferrer">Michol</a></span>
