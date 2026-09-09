@@ -69,6 +69,22 @@ body { min-height: 100vh; }
 .small-btn { height: 31px; padding: 0 11px; font-size: .56rem; }
 .admin-results { margin: 16px 48px 0; }
 
+/* Login state: center the Discord login card and remove live rankings. */
+.responder-layout:has(.responder-main > .form > .card-heading) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.responder-layout:has(.responder-main > .form > .card-heading) .responder-main {
+  width: min(760px, 100%);
+  margin: 0 auto;
+}
+.responder-layout:has(.responder-main > .form > .card-heading) .responder-ranking {
+  display: none;
+}
+.responder-layout:has(.responder-main > .form > .card-heading) .responder-main > .form {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 @media (max-width: 700px) {
   .site-wrapper { align-items: flex-start; padding: 18px 12px 28px; }
   .shell { width: 100%; max-width: none; }
