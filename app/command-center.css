@@ -21,3 +21,4 @@
 .command-admin-entry.is-collapsed{padding-bottom:7px}.command-admin-entry.is-collapsed>*:not(.entry-top){display:none}.command-admin-entry.is-collapsed .entry-top{padding-bottom:0}
 .command-admin-results .notice{margin-left:9px;margin-right:9px}.command-admin-results .entry-list{scrollbar-width:thin;scrollbar-color:#6c3711 #100a06}
 @media (max-width:520px){.command-filter-toolbar{grid-template-columns:1fr 1fr}.command-filter-toolbar input{grid-column:1/-1}.command-admin-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.ranking-summary{grid-template-columns:repeat(3,minmax(0,1fr))}.command-scroll-panel{max-height:255px}}
+/* deployment refresh */
