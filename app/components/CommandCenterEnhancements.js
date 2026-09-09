@@ -30,66 +30,59 @@ function getStats(entries) {
   return { attending, withPilot, totalHours, noPilot, lowHours, readiness };
 }
 
+function getPublicStats(rankings) {
+  const totalHours = rankings.reduce((sum, x) => sum + hours(x.hours), 0);
+  return { attendingCount: rankings.length, totalHours, leader: rankings[0]?.ign || '—' };
+}
+
 function sortedRankings(entries) {
   return entries.filter((x) => x.attendance === 'attending').slice().sort((a, b) => hours(b.hours) - hours(a.hours) || String(a.submittedAt || '').localeCompare(String(b.submittedAt || ''))).map((x, i) => ({ ...x, rank: i + 1 }));
 }
 
-function clearOld(root, className) {
-  root.querySelectorAll(`.${className}`).forEach((node) => node.remove());
-}
+function clearOld(root, className) { root.querySelectorAll(`.${className}`).forEach((node) => node.remove()); }
 
-function buildLeaderboard(panel, entries, rankings, currentIgn = '') {
+function buildLeaderboard(panel, entries, rankings, currentIgn = '', showPilot = true, limit = 0) {
   const list = panel.querySelector('.command-leaderboard-list');
   if (!list) return;
   const ranked = rankings.length ? rankings : sortedRankings(entries);
+  const visible = limit > 0 ? ranked.slice(0, limit) : ranked;
   list.replaceChildren();
-  if (!ranked.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = 'No attending responses yet.'; list.appendChild(empty); return; }
-  ranked.forEach((item) => {
-    const row = document.createElement('div');
-    row.className = 'ranking-item';
+  if (!visible.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = 'No attending responses yet.'; list.appendChild(empty); return; }
+  visible.forEach((item) => {
+    const row = document.createElement('div'); row.className = 'ranking-item';
     if (item.rank <= 3) row.classList.add(`ranking-top-${item.rank === 1 ? 'one' : item.rank === 2 ? 'two' : 'three'}`);
     if (currentIgn && item.ign === currentIgn) row.classList.add('ranking-current-user');
     const pos = document.createElement('span'); pos.className = 'ranking-position'; pos.textContent = `#${item.rank}`;
     const ign = document.createElement('span'); ign.className = 'ranking-ign'; ign.textContent = item.ign || '—';
     if (currentIgn && item.ign === currentIgn) { const you = document.createElement('em'); you.className = 'current-user-tag'; you.textContent = 'YOU'; ign.appendChild(you); }
-    const status = document.createElement('span'); status.className = 'ranking-status'; status.textContent = item.pilot === 'have_pilot' ? '🎮 PILOT' : '⚠ NO PILOT';
+    const status = document.createElement('span'); status.className = 'ranking-status'; status.textContent = showPilot ? (item.pilot === 'have_pilot' ? '🎮 PILOT' : '⚠ NO PILOT') : '✅ ATTENDING';
     const hrs = document.createElement('span'); hrs.className = 'ranking-hours'; hrs.textContent = hours(item.hours) ? `${hours(item.hours)} HRS` : 'HOURS: —';
     row.append(pos, ign, status, hrs); list.appendChild(row);
   });
 }
 
-function createLeaderboard(title, entries, rankings, currentIgn) {
+function createLeaderboard(title, entries, rankings, currentIgn, showPilot, canToggle) {
   const panel = document.createElement('section'); panel.className = 'command-ranking-panel command-live-leaderboard';
   const heading = document.createElement('div'); heading.className = 'ranking-heading command-section-head'; heading.innerHTML = '<div><div class="eyebrow">LIVE LEADERBOARD</div><h2></h2></div><div class="command-ranking-meta"></div>';
   heading.querySelector('h2').textContent = title;
   const list = document.createElement('div'); list.className = 'command-leaderboard-list command-scroll-panel';
-  panel.append(heading, list); buildLeaderboard(panel, entries, rankings, currentIgn);
-  const ranked = rankings.length ? rankings : sortedRankings(entries); heading.querySelector('.command-ranking-meta').textContent = `${ranked.length} ATTENDING · ${Math.round(getStats(entries).totalHours * 10) / 10} HRS`;
+  panel.append(heading, list);
+  const ranked = rankings.length ? rankings : sortedRankings(entries);
+  const useLimit = canToggle && ranked.length > 10;
+  let showingAll = false;
+  const render = () => { buildLeaderboard(panel, entries, ranked, currentIgn, showPilot, useLimit && !showingAll ? 10 : 0); };
+  render();
+  heading.querySelector('.command-ranking-meta').textContent = `${ranked.length} ATTENDING · ${Math.round(getPublicStats(ranked).totalHours * 10) / 10} HRS`;
+  if (useLimit) {
+    const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'command-toggle'; toggle.textContent = `SHOW ALL ${ranked.length}`;
+    toggle.onclick = () => { showingAll = !showingAll; toggle.textContent = showingAll ? 'SHOW TOP 10' : `SHOW ALL ${ranked.length}`; render(); };
+    panel.appendChild(toggle);
+  }
   return panel;
 }
 
-function createDashboard(mode, entries, rankings, deadline, currentIgn) {
-  const s = getStats(entries); const root = document.createElement('section'); root.className = `command-dashboard command-${mode}-dashboard command-dashboard-mount`;
-  const title = document.createElement('div'); title.className = 'command-title-row'; title.innerHTML = '<div><div class="eyebrow"></div><h3></h3></div><span class="command-live"><i></i> LIVE · 20S</span>';
-  title.querySelector('.eyebrow').textContent = mode === 'admin' ? 'ADMIN COMMAND CENTER' : 'FD COMMAND CENTER'; title.querySelector('h3').textContent = mode === 'admin' ? 'FD Readiness' : 'Attendance Overview'; root.appendChild(title);
-  const summary = document.createElement('div'); summary.className = 'command-stats'; if (mode === 'admin') summary.classList.add('command-admin-summary');
-  const statItems = mode === 'admin' ? [['RESPONSES', entries.length], ['ATTENDING', s.attending.length], ['NOT ATTENDING', entries.length - s.attending.length], ['WITH PILOT', s.withPilot.length], ['NO PILOT', s.noPilot], ['TOTAL HOURS', `${Math.round(s.totalHours * 10) / 10} HRS`]] : [['RESPONSES', entries.length], ['ATTENDING', s.attending.length], ['TOTAL HOURS', `${Math.round(s.totalHours * 10) / 10} HRS`], ['NO PILOT', s.noPilot]];
-  statItems.forEach(([label, value]) => summary.appendChild(makeStat(label, value))); root.appendChild(summary);
-  const readiness = document.createElement('div'); readiness.className = 'command-readiness'; readiness.innerHTML = '<div><span>FD READINESS</span><b></b></div><div class="readiness-track"><span></span></div><small></small>';
-  readiness.querySelector('b').textContent = `${s.readiness}%`; readiness.querySelector('.readiness-track span').style.width = `${s.readiness}%`; readiness.querySelector('small').textContent = '60% attendance coverage + 40% pilot coverage among attending members.'; root.appendChild(readiness);
-  const warnings = document.createElement('div'); warnings.className = 'command-warnings';
-  if (s.noPilot > 0) { const x = document.createElement('span'); x.className = 'warning-chip'; x.textContent = `⚠ ${s.noPilot} ATTENDING WITHOUT PILOT`; warnings.appendChild(x); }
-  if (s.lowHours > 0) { const x = document.createElement('span'); x.className = 'warning-chip'; x.textContent = `⚠ ${s.lowHours} BELOW 10 HRS`; warnings.appendChild(x); }
-  if (!warnings.children.length) { const x = document.createElement('span'); x.className = 'good-chip'; x.textContent = '✓ NO CURRENT FD WARNINGS'; warnings.appendChild(x); }
-  root.appendChild(warnings); root.appendChild(createLeaderboard('Attending Rankings', entries, rankings, currentIgn));
-  if (mode === 'admin') root.appendChild(createMiniBurn());
-  if (deadline) { const d = document.createElement('div'); d.className = 'command-deadline'; const l = document.createElement('span'); l.textContent = 'RESPONSE DEADLINE'; const r = document.createElement('b'); r.textContent = new Date(deadline).toLocaleString('en-PH', { timeZone: 'Asia/Manila' }); d.append(l, r); root.appendChild(d); }
-  return root;
-}
-
 function getCurrentIgn() {
-  const good = [...document.querySelectorAll('.notice.good b')].map((x) => x.textContent?.trim()).filter(Boolean);
-  return good.find((x) => !x.includes('DISCORD') && !x.includes('response')) || good[0] || '';
+  try { return JSON.parse(localStorage.getItem('fd_attendance_entry') || 'null')?.ign || ''; } catch { return ''; }
 }
 
 function createMiniBurn() {
@@ -100,22 +93,37 @@ function createMiniBurn() {
   const list = document.createElement('div'); list.className = 'mini-burn-list'; section.appendChild(list);
   const read = () => { try { return JSON.parse(localStorage.getItem('fd_mini_burn') || '[]'); } catch { return []; } };
   const write = (items) => localStorage.setItem('fd_mini_burn', JSON.stringify(items));
-  const render = () => {
-    const items = read().filter((x) => Number(x.reps) > 0 && Number(x.reps) < 10000).sort((a, b) => Number(a.reps) - Number(b.reps)); list.replaceChildren();
-    if (!items.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = 'No members under 10k reps added.'; list.appendChild(empty); return; }
-    items.forEach((item) => { const row = document.createElement('div'); row.className = 'mini-burn-row'; const ign = document.createElement('span'); ign.textContent = item.ign; const reps = document.createElement('b'); reps.textContent = `${Number(item.reps).toLocaleString()} REPS`; const remove = document.createElement('button'); remove.className = 'mini-burn-remove'; remove.type = 'button'; remove.textContent = 'REMOVE'; remove.onclick = () => { write(items.filter((x) => x.ign !== item.ign)); render(); }; row.append(ign, reps, remove); list.appendChild(row); });
-  };
+  const render = () => { const items = read().filter((x) => Number(x.reps) > 0 && Number(x.reps) < 10000).sort((a, b) => Number(a.reps) - Number(b.reps)); list.replaceChildren(); if (!items.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = 'No members under 10k reps added.'; list.appendChild(empty); return; } items.forEach((item) => { const row = document.createElement('div'); row.className = 'mini-burn-row'; const ign = document.createElement('span'); ign.textContent = item.ign; const reps = document.createElement('b'); reps.textContent = `${Number(item.reps).toLocaleString()} REPS`; const remove = document.createElement('button'); remove.className = 'mini-burn-remove'; remove.type = 'button'; remove.textContent = 'REMOVE'; remove.onclick = () => { write(items.filter((x) => x.ign !== item.ign)); render(); }; row.append(ign, reps, remove); list.appendChild(row); }); };
   add.onclick = () => { const ign = window.prompt('IGN'); if (!ign?.trim()) return; const reps = window.prompt('Current reps'); if (!reps || !Number.isFinite(Number(reps))) return; const items = read().filter((x) => x.ign.toLowerCase() !== ign.trim().toLowerCase()); items.push({ ign: ign.trim(), reps: Number(reps) }); write(items); render(); };
   copy.onclick = () => { const items = read().filter((x) => Number(x.reps) > 0 && Number(x.reps) < 10000).sort((a, b) => Number(a.reps) - Number(b.reps)); const text = ['🔥 MINI BURN', '', ...items.map((x) => `${x.ign} — ${Number(x.reps).toLocaleString()} reps`), '', 'Please prioritize activity and aim to reach 10k reps.'].join('\n'); navigator.clipboard?.writeText(text).catch(() => {}); };
   render(); return section;
 }
 
+function createDashboard(mode, entries, rankings, deadline, currentIgn) {
+  const root = document.createElement('section'); root.className = `command-dashboard command-${mode}-dashboard command-dashboard-mount`;
+  const title = document.createElement('div'); title.className = 'command-title-row'; title.innerHTML = '<div><div class="eyebrow"></div><h3></h3></div><span class="command-live"><i></i> LIVE · 20S</span>';
+  title.querySelector('.eyebrow').textContent = mode === 'admin' ? 'ADMIN COMMAND CENTER' : 'FD COMMAND CENTER'; title.querySelector('h3').textContent = mode === 'admin' ? 'FD Readiness' : 'Attendance Overview'; root.appendChild(title);
+
+  if (mode === 'admin') {
+    const s = getStats(entries); const summary = document.createElement('div'); summary.className = 'command-stats command-admin-summary';
+    [['RESPONSES', entries.length], ['ATTENDING', s.attending.length], ['NOT ATTENDING', entries.length - s.attending.length], ['WITH PILOT', s.withPilot.length], ['NO PILOT', s.noPilot], ['TOTAL HOURS', `${Math.round(s.totalHours * 10) / 10} HRS`]].forEach(([label, value]) => summary.appendChild(makeStat(label, value))); root.appendChild(summary);
+    const readiness = document.createElement('div'); readiness.className = 'command-readiness'; readiness.innerHTML = '<div><span>FD READINESS</span><b></b></div><div class="readiness-track"><span></span></div><small>60% attendance coverage + 40% pilot coverage among attending members.</small>'; readiness.querySelector('b').textContent = `${s.readiness}%`; readiness.querySelector('.readiness-track span').style.width = `${s.readiness}%`; root.appendChild(readiness);
+    const warnings = document.createElement('div'); warnings.className = 'command-warnings'; if (s.noPilot > 0) { const x = document.createElement('span'); x.className = 'warning-chip'; x.textContent = `⚠ ${s.noPilot} ATTENDING WITHOUT PILOT`; warnings.appendChild(x); } if (s.lowHours > 0) { const x = document.createElement('span'); x.className = 'warning-chip'; x.textContent = `⚠ ${s.lowHours} BELOW 10 HRS`; warnings.appendChild(x); } if (!warnings.children.length) { const x = document.createElement('span'); x.className = 'good-chip'; x.textContent = '✓ NO CURRENT FD WARNINGS'; warnings.appendChild(x); } root.appendChild(warnings);
+    root.appendChild(createLeaderboard('Attending Rankings', entries, rankings, '', true, false)); root.appendChild(createMiniBurn());
+  } else {
+    const p = getPublicStats(rankings); const summary = document.createElement('div'); summary.className = 'command-stats'; [['ATTENDING', p.attendingCount], ['TOTAL HOURS', `${Math.round(p.totalHours * 10) / 10} HRS`], ['LEADER', p.leader], ['STATUS', 'LIVE']].forEach(([label, value]) => summary.appendChild(makeStat(label, value))); root.appendChild(summary);
+    root.appendChild(createLeaderboard('Attending Rankings', entries, rankings, currentIgn, false, true));
+  }
+  if (deadline) { const d = document.createElement('div'); d.className = 'command-deadline'; const l = document.createElement('span'); l.textContent = 'RESPONSE DEADLINE'; const r = document.createElement('b'); r.textContent = new Date(deadline).toLocaleString('en-PH', { timeZone: 'Asia/Manila' }); d.append(l, r); root.appendChild(d); }
+  return root;
+}
+
 function enhancePublic(data) {
-  const layout = document.querySelector('.responder-layout'); if (!layout) return; clearOld(layout, 'command-dashboard-mount'); const oldRanking = layout.querySelector('.responder-ranking'); if (oldRanking) oldRanking.style.display = 'none'; layout.insertBefore(createDashboard('public', data.entries || (data.entry ? [data.entry] : []), data.attendingRankings || [], data.deadline, getCurrentIgn()), layout.firstChild);
+  const layout = document.querySelector('.responder-layout'); if (!layout) return; clearOld(layout, 'command-dashboard-mount'); const oldRanking = layout.querySelector('.responder-ranking'); if (oldRanking) oldRanking.style.display = 'none'; const rankings = data.attendingRankings || []; layout.insertBefore(createDashboard('public', [], rankings, data.deadline, getCurrentIgn()), layout.firstChild);
 }
 
 function enhanceAdmin(data) {
-  const layout = document.querySelector('.admin-layout'); if (!layout) return; clearOld(layout, 'command-dashboard-mount'); const dash = createDashboard('admin', data.entries || [], data.attendingRankings || [], data.deadline, ''); layout.insertBefore(dash, layout.firstChild);
+  const layout = document.querySelector('.admin-layout'); if (!layout) return; clearOld(layout, 'command-dashboard-mount'); layout.insertBefore(createDashboard('admin', data.entries || [], data.attendingRankings || [], data.deadline, ''), layout.firstChild);
   const results = document.querySelector('.admin-results'); const list = results?.querySelector('.entry-list'); if (!list) return; results.classList.add('command-admin-results');
   let toolbar = results.querySelector('.command-response-toolbar'); if (!toolbar) {
     toolbar = document.createElement('div'); toolbar.className = 'command-filter-toolbar command-response-toolbar'; toolbar.innerHTML = '<input type="search" placeholder="SEARCH IGN" aria-label="Search response IGN"><select aria-label="Filter responses"><option value="all">ALL RESPONSES</option><option value="attending">ATTENDING</option><option value="not_attending">NOT ATTENDING</option><option value="pilot">WITH PILOT</option><option value="no_pilot">NO PILOT</option></select><select aria-label="Sort responses"><option value="recent">SORT: RECENT</option><option value="hours">SORT: HOURS ↓</option><option value="ign">SORT: IGN A–Z</option></select>'; results.insertBefore(toolbar, list);
