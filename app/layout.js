@@ -3,6 +3,7 @@ import './centered-layout.css';
 import './security-accessibility.css';
 import './live-ranking.css';
 import './command-center.css';
+import './force-ui.css';
 import CommandCenterEnhancements from './components/CommandCenterEnhancements';
 
 export const metadata = {
