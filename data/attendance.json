@@ -39,6 +39,19 @@
       "locked": false,
       "discordId": "",
       "discordUsername": ""
+    },
+    {
+      "id": "8de66986-5668-4a60-ba9b-cd2be481140a",
+      "ign": "4",
+      "attendance": "attending",
+      "pilot": "have_pilot",
+      "pilotName": "4",
+      "hours": "4",
+      "notes": "4",
+      "submittedAt": "2026-09-09T03:26:56.513Z",
+      "locked": false,
+      "discordId": "",
+      "discordUsername": ""
     }
   ]
 }
