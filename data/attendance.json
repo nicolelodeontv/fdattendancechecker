@@ -13,6 +13,19 @@
       "locked": true,
       "discordId": "396080330702061588",
       "discordUsername": "michol"
+    },
+    {
+      "id": "343056c8-1aae-4d8c-982b-9e85b5bed061",
+      "ign": "2",
+      "attendance": "attending",
+      "pilot": "have_pilot",
+      "pilotName": "2",
+      "hours": "2",
+      "notes": "2",
+      "submittedAt": "2026-09-09T03:26:37.318Z",
+      "locked": false,
+      "discordId": "",
+      "discordUsername": ""
     }
   ]
 }
