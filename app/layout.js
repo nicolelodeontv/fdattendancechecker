@@ -4,6 +4,7 @@ import './security-accessibility.css';
 import './live-ranking.css';
 import './command-center.css';
 import './force-ui.css';
+import './response-list-fix.css';
 import CommandCenterEnhancements from './components/CommandCenterEnhancements';
 
 export const metadata = {
