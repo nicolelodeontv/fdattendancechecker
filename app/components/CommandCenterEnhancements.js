@@ -12,7 +12,7 @@ function hours(value) {
 function makeStat(label, value) {
   const el = document.createElement('div');
   el.className = 'command-stat';
-  el.innerHTML = `<span class="command-stat-value"></span><span class="command-stat-label"></span>`;
+  el.innerHTML = '<span class="command-stat-value"></span><span class="command-stat-label"></span>';
   el.querySelector('.command-stat-value').textContent = value;
   el.querySelector('.command-stat-label').textContent = label;
   return el;
@@ -31,11 +31,7 @@ function getStats(entries) {
 }
 
 function sortedRankings(entries) {
-  return entries
-    .filter((x) => x.attendance === 'attending')
-    .slice()
-    .sort((a, b) => hours(b.hours) - hours(a.hours) || String(a.submittedAt || '').localeCompare(String(b.submittedAt || '')))
-    .map((x, i) => ({ ...x, rank: i + 1 }));
+  return entries.filter((x) => x.attendance === 'attending').slice().sort((a, b) => hours(b.hours) - hours(a.hours) || String(a.submittedAt || '').localeCompare(String(b.submittedAt || ''))).map((x, i) => ({ ...x, rank: i + 1 }));
 }
 
 function clearOld(root, className) {
@@ -47,6 +43,7 @@ function buildLeaderboard(panel, entries, rankings, currentIgn = '') {
   if (!list) return;
   const ranked = rankings.length ? rankings : sortedRankings(entries);
   list.replaceChildren();
+  if (!ranked.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = 'No attending responses yet.'; list.appendChild(empty); return; }
   ranked.forEach((item) => {
     const row = document.createElement('div');
     row.className = 'ranking-item';
@@ -62,164 +59,87 @@ function buildLeaderboard(panel, entries, rankings, currentIgn = '') {
 }
 
 function createLeaderboard(title, entries, rankings, currentIgn) {
-  const panel = document.createElement('section');
-  panel.className = 'command-ranking-panel command-live-leaderboard';
-  const heading = document.createElement('div');
-  heading.className = 'ranking-heading command-section-head';
-  heading.innerHTML = '<div><div class="eyebrow">LIVE LEADERBOARD</div><h2></h2></div><div class="command-ranking-meta"></div>';
+  const panel = document.createElement('section'); panel.className = 'command-ranking-panel command-live-leaderboard';
+  const heading = document.createElement('div'); heading.className = 'ranking-heading command-section-head'; heading.innerHTML = '<div><div class="eyebrow">LIVE LEADERBOARD</div><h2></h2></div><div class="command-ranking-meta"></div>';
   heading.querySelector('h2').textContent = title;
   const list = document.createElement('div'); list.className = 'command-leaderboard-list command-scroll-panel';
-  panel.append(heading, list);
-  buildLeaderboard(panel, entries, rankings, currentIgn);
-  const ranked = rankings.length ? rankings : sortedRankings(entries);
-  heading.querySelector('.command-ranking-meta').textContent = `${ranked.length} ATTENDING`;
+  panel.append(heading, list); buildLeaderboard(panel, entries, rankings, currentIgn);
+  const ranked = rankings.length ? rankings : sortedRankings(entries); heading.querySelector('.command-ranking-meta').textContent = `${ranked.length} ATTENDING · ${Math.round(getStats(entries).totalHours * 10) / 10} HRS`;
   return panel;
 }
 
 function createDashboard(mode, entries, rankings, deadline, currentIgn) {
-  const stats = getStats(entries);
-  const root = document.createElement('section');
-  root.className = `command-dashboard command-${mode}-dashboard command-dashboard-mount`;
-
-  const title = document.createElement('div');
-  title.className = 'command-title-row';
-  title.innerHTML = '<div><div class="eyebrow"></div><h3></h3></div><span class="command-live"><i></i> LIVE · 20S</span>';
-  title.querySelector('.eyebrow').textContent = mode === 'admin' ? 'ADMIN COMMAND CENTER' : 'FD COMMAND CENTER';
-  title.querySelector('h3').textContent = mode === 'admin' ? 'FD Readiness' : 'Attendance Overview';
-  root.appendChild(title);
-
-  const summary = document.createElement('div'); summary.className = 'command-stats';
-  if (mode === 'admin') summary.classList.add('command-admin-summary');
-  const statItems = mode === 'admin'
-    ? [['RESPONSES', entries.length], ['ATTENDING', stats.attending.length], ['NOT ATTENDING', entries.length - stats.attending.length], ['WITH PILOT', stats.withPilot.length], ['NO PILOT', stats.noPilot], ['TOTAL HOURS', `${Math.round(stats.totalHours * 10) / 10} HRS`]]
-    : [['RESPONSES', entries.length], ['ATTENDING', stats.attending.length], ['TOTAL HOURS', `${Math.round(stats.totalHours * 10) / 10} HRS`], ['NO PILOT', stats.noPilot]];
-  statItems.forEach(([label, value]) => summary.appendChild(makeStat(label, value)));
-  root.appendChild(summary);
-
-  const readiness = document.createElement('div'); readiness.className = 'command-readiness';
-  readiness.innerHTML = '<div><span>FD READINESS</span><b></b></div><div class="readiness-track"><span></span></div><small></small>';
-  readiness.querySelector('b').textContent = `${stats.readiness}%`;
-  readiness.querySelector('.readiness-track span').style.width = `${stats.readiness}%`;
-  readiness.querySelector('small').textContent = '60% attendance coverage + 40% pilot coverage among attending members.';
-  root.appendChild(readiness);
-
+  const s = getStats(entries); const root = document.createElement('section'); root.className = `command-dashboard command-${mode}-dashboard command-dashboard-mount`;
+  const title = document.createElement('div'); title.className = 'command-title-row'; title.innerHTML = '<div><div class="eyebrow"></div><h3></h3></div><span class="command-live"><i></i> LIVE · 20S</span>';
+  title.querySelector('.eyebrow').textContent = mode === 'admin' ? 'ADMIN COMMAND CENTER' : 'FD COMMAND CENTER'; title.querySelector('h3').textContent = mode === 'admin' ? 'FD Readiness' : 'Attendance Overview'; root.appendChild(title);
+  const summary = document.createElement('div'); summary.className = 'command-stats'; if (mode === 'admin') summary.classList.add('command-admin-summary');
+  const statItems = mode === 'admin' ? [['RESPONSES', entries.length], ['ATTENDING', s.attending.length], ['NOT ATTENDING', entries.length - s.attending.length], ['WITH PILOT', s.withPilot.length], ['NO PILOT', s.noPilot], ['TOTAL HOURS', `${Math.round(s.totalHours * 10) / 10} HRS`]] : [['RESPONSES', entries.length], ['ATTENDING', s.attending.length], ['TOTAL HOURS', `${Math.round(s.totalHours * 10) / 10} HRS`], ['NO PILOT', s.noPilot]];
+  statItems.forEach(([label, value]) => summary.appendChild(makeStat(label, value))); root.appendChild(summary);
+  const readiness = document.createElement('div'); readiness.className = 'command-readiness'; readiness.innerHTML = '<div><span>FD READINESS</span><b></b></div><div class="readiness-track"><span></span></div><small></small>';
+  readiness.querySelector('b').textContent = `${s.readiness}%`; readiness.querySelector('.readiness-track span').style.width = `${s.readiness}%`; readiness.querySelector('small').textContent = '60% attendance coverage + 40% pilot coverage among attending members.'; root.appendChild(readiness);
   const warnings = document.createElement('div'); warnings.className = 'command-warnings';
-  if (stats.noPilot > 0) { const x = document.createElement('span'); x.className = 'warning-chip'; x.textContent = `⚠ ${stats.noPilot} ATTENDING WITHOUT PILOT`; warnings.appendChild(x); }
-  if (stats.lowHours > 0) { const x = document.createElement('span'); x.className = 'warning-chip'; x.textContent = `⚠ ${stats.lowHours} BELOW 10 HRS`; warnings.appendChild(x); }
+  if (s.noPilot > 0) { const x = document.createElement('span'); x.className = 'warning-chip'; x.textContent = `⚠ ${s.noPilot} ATTENDING WITHOUT PILOT`; warnings.appendChild(x); }
+  if (s.lowHours > 0) { const x = document.createElement('span'); x.className = 'warning-chip'; x.textContent = `⚠ ${s.lowHours} BELOW 10 HRS`; warnings.appendChild(x); }
   if (!warnings.children.length) { const x = document.createElement('span'); x.className = 'good-chip'; x.textContent = '✓ NO CURRENT FD WARNINGS'; warnings.appendChild(x); }
-  root.appendChild(warnings);
-
-  root.appendChild(createLeaderboard('Attending Rankings', entries, rankings, currentIgn));
-  if (deadline) {
-    const d = document.createElement('div'); d.className = 'command-deadline';
-    const left = document.createElement('span'); left.textContent = 'RESPONSE DEADLINE';
-    const right = document.createElement('b'); right.textContent = new Date(deadline).toLocaleString('en-PH', { timeZone: 'Asia/Manila' });
-    d.append(left, right); root.appendChild(d);
-  }
+  root.appendChild(warnings); root.appendChild(createLeaderboard('Attending Rankings', entries, rankings, currentIgn));
+  if (mode === 'admin') root.appendChild(createMiniBurn());
+  if (deadline) { const d = document.createElement('div'); d.className = 'command-deadline'; const l = document.createElement('span'); l.textContent = 'RESPONSE DEADLINE'; const r = document.createElement('b'); r.textContent = new Date(deadline).toLocaleString('en-PH', { timeZone: 'Asia/Manila' }); d.append(l, r); root.appendChild(d); }
   return root;
 }
 
 function getCurrentIgn() {
-  const notices = [...document.querySelectorAll('.notice.good')];
-  for (const notice of notices) {
-    const text = notice.querySelector('b')?.textContent?.trim();
-    if (text && text !== 'Your response is locked after submission.') return text;
-  }
-  return '';
+  const good = [...document.querySelectorAll('.notice.good b')].map((x) => x.textContent?.trim()).filter(Boolean);
+  return good.find((x) => !x.includes('DISCORD') && !x.includes('response')) || good[0] || '';
+}
+
+function createMiniBurn() {
+  const section = document.createElement('section'); section.className = 'command-mini-burn';
+  const head = document.createElement('div'); head.className = 'command-section-head'; head.innerHTML = '<div><div class="eyebrow">ACTIVITY</div><h2>Mini Burn</h2></div><div class="admin-results-actions"></div>';
+  const actions = head.querySelector('.admin-results-actions'); const add = document.createElement('button'); add.className = 'small-btn'; add.type = 'button'; add.textContent = 'ADD REPS'; const copy = document.createElement('button'); copy.className = 'small-btn'; copy.type = 'button'; copy.textContent = 'COPY MESSAGE'; actions.append(add, copy); section.appendChild(head);
+  const note = document.createElement('p'); note.className = 'command-muted'; note.textContent = 'Track members below 10,000 reps. Values are saved locally on this admin browser.'; section.appendChild(note);
+  const list = document.createElement('div'); list.className = 'mini-burn-list'; section.appendChild(list);
+  const read = () => { try { return JSON.parse(localStorage.getItem('fd_mini_burn') || '[]'); } catch { return []; } };
+  const write = (items) => localStorage.setItem('fd_mini_burn', JSON.stringify(items));
+  const render = () => {
+    const items = read().filter((x) => Number(x.reps) > 0 && Number(x.reps) < 10000).sort((a, b) => Number(a.reps) - Number(b.reps)); list.replaceChildren();
+    if (!items.length) { const empty = document.createElement('div'); empty.className = 'empty-state'; empty.textContent = 'No members under 10k reps added.'; list.appendChild(empty); return; }
+    items.forEach((item) => { const row = document.createElement('div'); row.className = 'mini-burn-row'; const ign = document.createElement('span'); ign.textContent = item.ign; const reps = document.createElement('b'); reps.textContent = `${Number(item.reps).toLocaleString()} REPS`; const remove = document.createElement('button'); remove.className = 'mini-burn-remove'; remove.type = 'button'; remove.textContent = 'REMOVE'; remove.onclick = () => { write(items.filter((x) => x.ign !== item.ign)); render(); }; row.append(ign, reps, remove); list.appendChild(row); });
+  };
+  add.onclick = () => { const ign = window.prompt('IGN'); if (!ign?.trim()) return; const reps = window.prompt('Current reps'); if (!reps || !Number.isFinite(Number(reps))) return; const items = read().filter((x) => x.ign.toLowerCase() !== ign.trim().toLowerCase()); items.push({ ign: ign.trim(), reps: Number(reps) }); write(items); render(); };
+  copy.onclick = () => { const items = read().filter((x) => Number(x.reps) > 0 && Number(x.reps) < 10000).sort((a, b) => Number(a.reps) - Number(b.reps)); const text = ['🔥 MINI BURN', '', ...items.map((x) => `${x.ign} — ${Number(x.reps).toLocaleString()} reps`), '', 'Please prioritize activity and aim to reach 10k reps.'].join('\n'); navigator.clipboard?.writeText(text).catch(() => {}); };
+  render(); return section;
 }
 
 function enhancePublic(data) {
-  const layout = document.querySelector('.responder-layout');
-  if (!layout) return;
-  clearOld(layout, 'command-dashboard-mount');
-  const oldRanking = layout.querySelector('.responder-ranking');
-  if (oldRanking) oldRanking.style.display = 'none';
-  const dash = createDashboard('public', data.entries || (data.entry ? [data.entry] : []), data.attendingRankings || [], data.deadline, getCurrentIgn());
-  layout.insertBefore(dash, layout.firstChild);
+  const layout = document.querySelector('.responder-layout'); if (!layout) return; clearOld(layout, 'command-dashboard-mount'); const oldRanking = layout.querySelector('.responder-ranking'); if (oldRanking) oldRanking.style.display = 'none'; layout.insertBefore(createDashboard('public', data.entries || (data.entry ? [data.entry] : []), data.attendingRankings || [], data.deadline, getCurrentIgn()), layout.firstChild);
 }
 
 function enhanceAdmin(data) {
-  const layout = document.querySelector('.admin-layout');
-  if (!layout) return;
-  clearOld(layout, 'command-dashboard-mount');
-  const entries = data.entries || [];
-  const dash = createDashboard('admin', entries, data.attendingRankings || [], '');
-
-  const tools = document.createElement('div');
-  tools.className = 'command-admin-tools command-dashboard-mount';
-  tools.innerHTML = '<div class="command-tool-title"><div><div class="eyebrow">RESPONSE MANAGEMENT</div><h3>Find a Member</h3></div></div><div class="command-filter-toolbar"><input type="search" placeholder="SEARCH IGN" aria-label="Search response IGN"><select aria-label="Filter responses"><option value="all">ALL RESPONSES</option><option value="attending">ATTENDING</option><option value="not_attending">NOT ATTENDING</option><option value="pilot">WITH PILOT</option><option value="no_pilot">NO PILOT</option></select><select aria-label="Sort responses"><option value="recent">SORT: RECENT</option><option value="hours">SORT: HOURS ↓</option><option value="ign">SORT: IGN A–Z</option></select></div>';
-  dash.appendChild(tools);
-  rootAdminFilters(tools);
-  layout.insertBefore(dash, layout.firstChild);
-}
-
-function rootAdminFilters(tools) {
-  const apply = () => {
-    const results = document.querySelector('.admin-results');
-    const list = results?.querySelector('.entry-list');
-    if (!list) return;
-    const q = tools.querySelector('input').value.trim().toLowerCase();
-    const filter = tools.querySelectorAll('select')[0].value;
-    const sort = tools.querySelectorAll('select')[1].value;
-    const cards = [...list.querySelectorAll('.admin-entry')];
-    cards.forEach((card) => {
-      const text = card.textContent.toLowerCase();
-      const ign = card.querySelector('.entry-ign')?.textContent?.trim().toLowerCase() || '';
-      const okSearch = !q || ign.includes(q);
-      const okFilter = filter === 'all' || (filter === 'attending' && text.includes('attending') && !text.includes('not attending')) || (filter === 'not_attending' && text.includes('not attending')) || (filter === 'pilot' && (text.includes('have pilot') || text.includes('pilot:'))) || (filter === 'no_pilot' && (text.includes('no pilot') || text.includes('not attending')));
-      card.hidden = !(okSearch && okFilter);
-    });
-    const visible = cards.filter((x) => !x.hidden);
-    if (sort !== 'recent') visible.sort((a, b) => sort === 'ign' ? (a.querySelector('.entry-ign')?.textContent || '').localeCompare(b.querySelector('.entry-ign')?.textContent || '') : hours(b.textContent) - hours(a.textContent)).forEach((x) => list.appendChild(x));
-    decorateAdminCards(list);
-  };
-  tools.querySelectorAll('input,select').forEach((el) => { el.addEventListener('input', apply); el.addEventListener('change', apply); });
-  setTimeout(apply, 0);
+  const layout = document.querySelector('.admin-layout'); if (!layout) return; clearOld(layout, 'command-dashboard-mount'); const dash = createDashboard('admin', data.entries || [], data.attendingRankings || [], data.deadline, ''); layout.insertBefore(dash, layout.firstChild);
+  const results = document.querySelector('.admin-results'); const list = results?.querySelector('.entry-list'); if (!list) return; results.classList.add('command-admin-results');
+  let toolbar = results.querySelector('.command-response-toolbar'); if (!toolbar) {
+    toolbar = document.createElement('div'); toolbar.className = 'command-filter-toolbar command-response-toolbar'; toolbar.innerHTML = '<input type="search" placeholder="SEARCH IGN" aria-label="Search response IGN"><select aria-label="Filter responses"><option value="all">ALL RESPONSES</option><option value="attending">ATTENDING</option><option value="not_attending">NOT ATTENDING</option><option value="pilot">WITH PILOT</option><option value="no_pilot">NO PILOT</option></select><select aria-label="Sort responses"><option value="recent">SORT: RECENT</option><option value="hours">SORT: HOURS ↓</option><option value="ign">SORT: IGN A–Z</option></select>'; results.insertBefore(toolbar, list);
+    const apply = () => { const q = toolbar.querySelector('input').value.trim().toLowerCase(); const filter = toolbar.querySelectorAll('select')[0].value; const sort = toolbar.querySelectorAll('select')[1].value; const cards = [...list.querySelectorAll('.admin-entry')]; cards.forEach((card) => { const text = card.textContent.toLowerCase(); const ign = card.querySelector('.entry-ign')?.textContent?.trim().toLowerCase() || ''; const okSearch = !q || ign.includes(q); const okFilter = filter === 'all' || (filter === 'attending' && text.includes('attending') && !text.includes('not attending')) || (filter === 'not_attending' && text.includes('not attending')) || (filter === 'pilot' && (text.includes('have pilot') || text.includes('pilot:'))) || (filter === 'no_pilot' && text.includes('no pilot')); card.hidden = !(okSearch && okFilter); }); const visible = cards.filter((x) => !x.hidden); if (sort !== 'recent') visible.sort((a, b) => sort === 'ign' ? (a.querySelector('.entry-ign')?.textContent || '').localeCompare(b.querySelector('.entry-ign')?.textContent || '') : hours(b.textContent) - hours(a.textContent)).forEach((x) => list.appendChild(x)); decorateAdminCards(list); };
+    toolbar.querySelectorAll('input,select').forEach((el) => { el.addEventListener('input', apply); el.addEventListener('change', apply); }); setTimeout(apply, 0);
+  }
+  decorateAdminCards(list);
 }
 
 function decorateAdminCards(list) {
-  list.querySelectorAll('.admin-entry').forEach((card) => {
-    if (card.dataset.commandDecorated) return;
-    card.dataset.commandDecorated = '1';
-    card.classList.add('command-admin-entry');
-    const top = card.querySelector('.entry-top');
-    if (!top) return;
-    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'command-collapse-btn'; btn.textContent = 'COLLAPSE'; btn.setAttribute('aria-expanded', 'true');
-    btn.addEventListener('click', () => {
-      const collapsed = card.classList.toggle('is-collapsed');
-      btn.textContent = collapsed ? 'EXPAND' : 'COLLAPSE'; btn.setAttribute('aria-expanded', String(!collapsed));
-    });
-    top.appendChild(btn);
-  });
+  list.querySelectorAll('.admin-entry').forEach((card) => { if (card.dataset.commandDecorated) return; card.dataset.commandDecorated = '1'; card.classList.add('command-admin-entry'); const top = card.querySelector('.entry-top'); if (!top) return; const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'command-collapse-btn'; btn.textContent = 'COLLAPSE'; btn.setAttribute('aria-expanded', 'true'); btn.addEventListener('click', () => { const collapsed = card.classList.toggle('is-collapsed'); btn.textContent = collapsed ? 'EXPAND' : 'COLLAPSE'; btn.setAttribute('aria-expanded', String(!collapsed)); }); top.appendChild(btn); });
 }
 
 function enhanceCurrentMode() {
   const admin = document.querySelector('.admin-panel');
-  if (admin) {
-    const password = sessionStorage.getItem('fd_admin') || '';
-    if (!password) return;
-    fetch('/api/attendance?admin=1', { headers: { 'x-admin-password': password }, cache: 'no-store' })
-      .then((res) => res.ok ? res.json() : null).then((data) => { if (data) enhanceAdmin(data); }).catch(() => {});
-  } else {
-    fetch('/api/attendance', { cache: 'no-store' })
-      .then((res) => res.ok ? res.json() : null).then((data) => { if (data) enhancePublic(data); }).catch(() => {});
-  }
+  if (admin) { const password = sessionStorage.getItem('fd_admin') || ''; if (!password) return; fetch('/api/attendance?admin=1', { headers: { 'x-admin-password': password }, cache: 'no-store' }).then((r) => r.ok ? r.json() : null).then((data) => { if (data) enhanceAdmin(data); }).catch(() => {}); }
+  else fetch('/api/attendance', { cache: 'no-store' }).then((r) => r.ok ? r.json() : null).then((data) => { if (data) enhancePublic(data); }).catch(() => {});
 }
 
 export default function CommandCenterEnhancements() {
   useEffect(() => {
-    let timer;
-    let busy = false;
-    const run = () => {
-      if (busy) return;
-      busy = true;
-      enhanceCurrentMode();
-      window.clearTimeout(timer);
-      timer = window.setTimeout(() => { busy = false; }, 500);
-    };
-    const observer = new MutationObserver(run);
-    observer.observe(document.body, { childList: true, subtree: true });
-    run();
+    let timer; let busy = false;
+    const run = () => { if (busy) return; busy = true; enhanceCurrentMode(); window.clearTimeout(timer); timer = window.setTimeout(() => { busy = false; }, 500); };
+    const observer = new MutationObserver(run); observer.observe(document.body, { childList: true, subtree: true }); run();
     const interval = window.setInterval(enhanceCurrentMode, REFRESH_MS);
     return () => { observer.disconnect(); window.clearTimeout(timer); window.clearInterval(interval); };
   }, []);
