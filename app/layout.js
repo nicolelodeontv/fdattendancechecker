@@ -2,6 +2,8 @@ import './globals.css';
 import './centered-layout.css';
 import './security-accessibility.css';
 import './live-ranking.css';
+import './command-center.css';
+import CommandCenterEnhancements from './components/CommandCenterEnhancements';
 
 export const metadata = {
   metadataBase: new URL('https://fdattendancechecker.vercel.app'),
@@ -38,6 +40,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
+        <CommandCenterEnhancements />
         {children}
         <footer className="site-footer">
           <span>CHAOS FD Attendance Checker</span>
