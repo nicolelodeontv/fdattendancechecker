@@ -1,0 +1,36 @@
+/* RESPONSE LIST HARD FIX */
+.admin-results{min-width:0;overflow:hidden}
+.admin-results-head{min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.admin-results-head>*{min-width:0}
+.admin-results-actions{margin-left:auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;min-width:0;max-width:100%}
+.admin-results-actions>*{min-width:0;flex:0 1 auto}
+.admin-results .entry-list{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px!important;align-items:start;min-width:0}
+.admin-results .entry-list .admin-entry{width:100%;min-width:0;max-width:100%;margin:0!important;overflow:hidden}
+.admin-results .admin-entry .entry-top{display:grid!important;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:10px!important;min-width:0;width:100%}
+.admin-results .admin-entry .entry-top>*{min-width:0;max-width:100%}
+.admin-results .admin-entry .entry-ign{min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word;line-height:1.25}
+.admin-results .admin-entry .command-collapse-btn{width:auto;min-width:88px;max-width:100%;margin:0!important;justify-self:end;align-self:start;white-space:nowrap;line-height:1.1}
+.admin-results .admin-entry .badge-row{display:flex;flex-wrap:wrap;gap:6px;min-width:0;max-width:100%;margin-top:8px}
+.admin-results .admin-entry .badge{max-width:100%;white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.2}
+.admin-results .admin-entry .entry-meta,.admin-results .admin-entry .entry-notes{display:block;min-width:0;max-width:100%;overflow-wrap:anywhere;word-break:break-word;line-height:1.45}
+.admin-results .admin-entry .admin-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;min-width:0;max-width:100%;width:100%}
+.admin-results .admin-entry .admin-actions>*{min-width:0;flex:1 1 120px;max-width:100%;white-space:normal;line-height:1.15}
+.admin-results .entry-list .admin-entry input,
+.admin-results .entry-list .admin-entry textarea,
+.admin-results .entry-list .admin-entry select{width:100%;max-width:100%;min-width:0}
+.admin-results .command-response-toolbar{display:grid!important;grid-template-columns:minmax(0,1.5fr) minmax(150px,1fr) minmax(150px,1fr);gap:10px!important;width:100%;max-width:100%;min-width:0}
+.admin-results .command-response-toolbar>*{min-width:0;width:100%;max-width:100%}
+.admin-results .command-response-toolbar input,.admin-results .command-response-toolbar select{min-height:42px;line-height:1.2}
+@media(max-width:900px){
+  .admin-results .entry-list{grid-template-columns:1fr!important}
+  .admin-results .command-response-toolbar{grid-template-columns:1fr 1fr}
+  .admin-results .command-response-toolbar input{grid-column:1/-1}
+}
+@media(max-width:560px){
+  .admin-results .entry-list{grid-template-columns:1fr!important}
+  .admin-results .admin-entry .entry-top{grid-template-columns:1fr!important}
+  .admin-results .admin-entry .command-collapse-btn{justify-self:stretch;width:100%}
+  .admin-results .admin-entry .admin-actions>*{flex:1 1 100%}
+  .admin-results .command-response-toolbar{grid-template-columns:1fr!important}
+  .admin-results .command-response-toolbar input{grid-column:auto}
+}
