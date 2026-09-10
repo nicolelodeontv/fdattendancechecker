@@ -1,0 +1,129 @@
+/* MAJOR LAYOUT / TEXT COLLISION FIX */
+
+/* Locked responder state: make the response block a centered single column. */
+.responder-layout:has(.responder-main .entry){
+  display:grid!important;
+  grid-template-columns:minmax(0,760px)!important;
+  justify-content:center!important;
+  gap:14px!important;
+  width:100%!important;
+}
+.responder-layout:has(.responder-main .entry) .responder-main,
+.responder-layout:has(.responder-main .entry) .responder-ranking{
+  width:100%!important;
+  max-width:760px!important;
+  min-width:0!important;
+  margin:0 auto!important;
+}
+.responder-layout:has(.responder-main .entry) .responder-ranking{order:-1}
+.responder-layout:has(.responder-main .entry) .responder-main>.form{
+  width:100%!important;
+  max-width:760px!important;
+  margin:0 auto!important;
+  padding-left:0!important;
+  padding-right:0!important;
+}
+.responder-layout:has(.responder-main .entry) .notice.good{
+  width:100%!important;
+  max-width:100%!important;
+}
+.responder-layout:has(.responder-main .entry) .entry{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+}
+.responder-layout:has(.responder-main .entry) .response-logout-row{width:100%!important}
+
+/* Admin: use the full available width and keep the response list from becoming a tiny column. */
+.admin-layout{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:16px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.admin-main,.admin-results{width:100%!important;min-width:0!important;max-width:100%!important}
+.admin-results{margin-left:0!important;margin-right:0!important}
+.admin-results .entry-list{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:12px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.admin-results .entry-list .admin-entry{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+}
+
+/* Keep admin choice buttons on one visual line whenever there is room. */
+.admin-entry-grid .choices{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:6px!important;
+  min-width:0!important;
+}
+.admin-entry-grid .choice,
+.admin-entry-grid .choice label{
+  min-width:0!important;
+  max-width:100%!important;
+}
+.admin-entry-grid .choice label{
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  justify-content:center!important;
+  padding-inline:6px!important;
+}
+.admin-entry-grid .choice label .icon{flex:0 0 auto}
+.admin-entry-actions{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px!important;
+  width:100%!important;
+  min-width:0!important;
+}
+.admin-entry-actions .small-btn{
+  width:100%!important;
+  min-width:0!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+/* Admin reset controls stay on one line on desktop. */
+.admin-reset-actions{width:100%!important;min-width:0!important}
+.admin-reset-select-row{grid-template-columns:minmax(0,1fr) auto!important}
+.reset-locked-btn{white-space:nowrap!important}
+
+/* Response list header/actions never overlap. */
+.admin-results-head{align-items:center!important}
+.admin-results-head>div:first-child{min-width:0!important;flex:1 1 auto!important}
+.admin-results-actions{flex:0 0 auto!important;margin-left:auto!important;white-space:nowrap!important}
+.admin-results-actions .small-btn{white-space:nowrap!important}
+
+/* Protect every response-list string from painting underneath adjacent controls. */
+.admin-results *{min-width:0}
+.admin-results .entry-ign,
+.admin-results .entry-meta,
+.admin-results .entry-notes,
+.admin-results label,
+.admin-results .notice{
+  overflow-wrap:anywhere!important;
+  word-break:break-word!important;
+}
+
+@media(max-width:900px){
+  .admin-results .entry-list{grid-template-columns:1fr!important}
+}
+
+@media(max-width:560px){
+  .responder-layout:has(.responder-main .entry){grid-template-columns:minmax(0,1fr)!important}
+  .admin-entry-grid .choice label{white-space:normal!important;line-height:1.1!important}
+  .admin-entry-actions{grid-template-columns:1fr!important}
+  .admin-reset-select-row{grid-template-columns:1fr!important}
+  .admin-results-actions{width:100%!important;margin-left:0!important}
+  .admin-results-actions .small-btn{flex:1 1 0!important}
+}
