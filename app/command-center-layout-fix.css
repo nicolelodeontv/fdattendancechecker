@@ -1,0 +1,236 @@
+/* COMMAND CENTER MAJOR LAYOUT FIX */
+.command-dashboard,
+.command-ranking-panel,
+.command-admin-results,
+.command-admin-tools{box-sizing:border-box;min-width:0;width:100%;max-width:100%;overflow:hidden}
+
+/* Center all command-center section headings in both responder/admin views. */
+.command-dashboard .command-title-row,
+.command-dashboard .command-section-head,
+.command-ranking-panel .ranking-heading,
+.command-ranking-panel .card-heading,
+.command-admin-tools .command-tool-title,
+.command-readiness>div:first-child{box-sizing:border-box;width:100%;max-width:100%;text-align:center}
+
+.command-dashboard .command-title-row,
+.command-dashboard .command-section-head{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:8px;
+  padding-inline:16px;
+}
+
+.command-dashboard .command-title-row h3,
+.command-dashboard .command-section-head>*{
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  text-align:center;
+}
+
+.command-dashboard .command-live{
+  position:static;
+  flex:0 0 auto;
+  white-space:normal;
+  text-align:center;
+}
+
+.command-dashboard .command-stats,
+.command-dashboard .command-admin-summary,
+.command-dashboard .ranking-summary{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  padding-inline:16px;
+}
+
+.command-dashboard .command-stat{
+  min-width:0;
+  width:100%;
+  padding:8px 8px 7px;
+  text-align:center;
+  overflow:hidden;
+}
+
+.command-dashboard .command-stat-value,
+.command-dashboard .command-stat-label{
+  display:block;
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  white-space:normal;
+  text-align:center;
+}
+
+.command-dashboard .command-stat-label{line-height:1.2}
+
+.command-readiness{
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  padding:10px 16px 11px;
+  overflow:hidden;
+}
+
+.command-readiness>div:first-child{
+  justify-content:center;
+  gap:10px;
+  line-height:1.25;
+}
+
+.command-readiness>div:first-child>*{
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+.command-readiness b{white-space:nowrap}
+
+.command-readiness small{
+  max-width:100%;
+  padding-inline:2px;
+  line-height:1.4;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  text-align:center;
+}
+
+.command-warnings{
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  padding:9px 16px;
+  justify-content:center;
+  overflow:hidden;
+}
+
+.warning-chip,.good-chip{
+  max-width:100%;
+  min-width:0;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  text-align:center;
+  justify-content:center;
+}
+
+/* LIVE LEADERBOARD / ATTENDING RANKINGS */
+.command-ranking-panel .ranking-heading,
+.command-ranking-panel .ranking-heading .card-heading{
+  margin:0;
+  padding:13px 16px 10px;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+}
+
+.command-ranking-panel .ranking-heading h2,
+.command-ranking-panel .ranking-heading p,
+.command-ranking-panel .ranking-heading .eyebrow{
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  text-align:center;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+.command-ranking-panel .ranking-heading p{margin-inline:auto}
+
+.command-ranking-panel .ranking-heading:before,
+.command-ranking-panel .ranking-heading:after{flex:0 0 auto}
+
+.command-ranking-panel .command-scroll-panel{
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  padding-inline:16px;
+  overflow-x:hidden;
+}
+
+.command-ranking-panel .ranking-item{
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  grid-template-columns:minmax(42px,0.5fr) minmax(0,2fr) minmax(92px,0.9fr) minmax(82px,.8fr);
+  gap:10px;
+  padding:7px 10px;
+  overflow:hidden;
+}
+
+.command-ranking-panel .ranking-item>*{
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+.command-ranking-panel .ranking-position,
+.command-ranking-panel .ranking-hours,
+.command-ranking-panel .ranking-status{
+  white-space:normal;
+  line-height:1.2;
+}
+
+.command-ranking-panel .ranking-position{text-align:center}
+.command-ranking-panel .ranking-ign{text-align:left}
+.command-ranking-panel .ranking-status{text-align:center}
+.command-ranking-panel .ranking-hours{text-align:right}
+
+.command-ranking-panel .current-user-tag{
+  max-width:100%;
+  white-space:nowrap;
+}
+
+.command-deadline{
+  box-sizing:border-box;
+  width:calc(100% - 32px);
+  max-width:calc(100% - 32px);
+  margin-inline:16px;
+  overflow:hidden;
+}
+
+.command-deadline span,
+.command-deadline b{
+  min-width:0;
+  max-width:100%;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+
+/* Admin response side: keep the command center independent from the narrow form column. */
+.admin-layout{min-width:0}
+.admin-layout .command-dashboard{grid-column:1/-1}
+.admin-main,.admin-results{min-width:0;max-width:100%}
+
+@media(max-width:900px){
+  .command-dashboard .command-stats,
+  .command-dashboard .command-admin-summary,
+  .command-dashboard .ranking-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .command-ranking-panel .ranking-item{grid-template-columns:42px minmax(0,1fr) minmax(82px,.8fr)}
+  .command-ranking-panel .ranking-status{display:none}
+}
+
+@media(max-width:560px){
+  .command-dashboard .command-title-row,
+  .command-dashboard .command-section-head,
+  .command-readiness>div:first-child{padding-inline:12px}
+  .command-dashboard .command-stats,
+  .command-dashboard .command-admin-summary,
+  .command-dashboard .ranking-summary{grid-template-columns:1fr 1fr;padding-inline:12px}
+  .command-ranking-panel .ranking-heading,
+  .command-ranking-panel .ranking-heading .card-heading{padding-inline:12px}
+  .command-ranking-panel .command-scroll-panel{padding-inline:12px}
+  .command-ranking-panel .ranking-item{grid-template-columns:32px minmax(0,1fr) auto;gap:7px;padding-inline:8px}
+  .command-ranking-panel .ranking-status{display:none}
+  .command-ranking-panel .ranking-hours{white-space:nowrap;text-align:right}
+  .command-deadline{width:calc(100% - 24px);max-width:calc(100% - 24px);margin-inline:12px}
+}
