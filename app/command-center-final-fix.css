@@ -1,0 +1,28 @@
+/* FINAL COMMAND CENTER CENTERING / SINGLE-COLUMN FIX */
+.command-dashboard{width:100%!important;margin-left:auto!important;margin-right:auto!important;text-align:center!important}
+.command-title-row{display:grid!important;grid-template-columns:minmax(0,1fr)!important;justify-items:center!important;align-items:center!important;gap:5px!important;padding:13px 16px 11px!important;text-align:center!important}
+.command-title-row>div{width:100%!important;min-width:0!important;flex:none!important;text-align:center!important}
+.command-title-row .eyebrow,.command-title-row h3{width:100%!important;text-align:center!important;margin-left:auto!important;margin-right:auto!important}
+.command-title-row h3{margin-top:5px!important}
+.command-title-row .command-live{order:2!important;width:auto!important;margin:1px auto 0!important;justify-self:center!important;text-align:center!important;white-space:normal!important}
+.command-ranking-panel .ranking-heading{display:grid!important;grid-template-columns:minmax(0,1fr)!important;justify-items:center!important;align-items:center!important;gap:5px!important;padding:13px 16px 10px!important;text-align:center!important}
+.command-ranking-panel .ranking-heading>div:first-child{width:100%!important;min-width:0!important;flex:none!important;text-align:center!important}
+.command-ranking-panel .ranking-heading .eyebrow,.command-ranking-panel .ranking-heading h2{width:100%!important;text-align:center!important}
+.command-ranking-panel .ranking-heading h2{margin-top:6px!important}
+.command-ranking-panel .command-ranking-meta{order:2!important;width:auto!important;max-width:100%!important;margin:2px auto 0!important;text-align:center!important;white-space:normal!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+.command-dashboard .command-stats,.command-dashboard .command-admin-summary,.command-dashboard .ranking-summary{width:100%!important;margin-left:auto!important;margin-right:auto!important}
+.command-dashboard .command-stat{min-width:0!important;width:100%!important;text-align:center!important;overflow:hidden!important}
+.command-dashboard .command-stat-value,.command-dashboard .command-stat-label{width:100%!important;text-align:center!important;overflow-wrap:anywhere!important;word-break:break-word!important;white-space:normal!important}
+.command-dashboard .command-readiness>div:first-child{display:grid!important;grid-template-columns:minmax(0,1fr)!important;justify-items:center!important;gap:3px!important;text-align:center!important}
+.command-dashboard .command-readiness>div:first-child span,.command-dashboard .command-readiness>div:first-child b{width:100%!important;text-align:center!important}
+.command-dashboard .command-readiness small{padding:0 8px!important;text-align:center!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+.command-ranking-panel .ranking-item{display:grid!important;grid-template-columns:42px minmax(0,1fr) minmax(92px,auto)!important;gap:10px!important;align-items:center!important;min-width:0!important}
+.command-ranking-panel .ranking-position{text-align:center!important}
+.command-ranking-panel .ranking-ign{text-align:left!important;min-width:0!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+.command-ranking-panel .ranking-hours{text-align:right!important;min-width:0!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+.command-ranking-panel .ranking-status{text-align:center!important;min-width:0!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+/* Keep the command-center presentation single-column in both modes. */
+.admin-layout,.responder-layout{grid-template-columns:minmax(0,1fr)!important;width:100%!important;max-width:100%!important;margin-left:auto!important;margin-right:auto!important}
+.admin-main,.admin-results,.responder-main,.responder-ranking{width:100%!important;min-width:0!important;max-width:100%!important;margin-left:auto!important;margin-right:auto!important}
+.command-dashboard .eyebrow,.command-dashboard .command-live,.command-dashboard .command-ranking-meta{max-width:100%!important;padding-left:6px!important;padding-right:6px!important;box-sizing:border-box!important;overflow-wrap:anywhere!important;word-break:break-word!important}
+@media(max-width:760px){.command-dashboard .command-stats,.command-dashboard .command-admin-summary,.command-dashboard .ranking-summary{grid-template-columns:1fr!important}.command-ranking-panel .ranking-item{grid-template-columns:36px minmax(0,1fr) auto!important;gap:7px!important}.command-ranking-panel .ranking-status{display:none!important}.command-ranking-panel .ranking-hours{text-align:right!important}}
