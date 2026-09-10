@@ -1,0 +1,97 @@
+/* FORCE RANKING ROWS TO ONE LINE - ADMIN + RESPONDER */
+.command-ranking-panel,
+.command-live-leaderboard,
+.command-dashboard {
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.command-ranking-panel .command-leaderboard-list,
+.command-ranking-panel .command-scroll-panel {
+  min-width: 0 !important;
+  width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+.command-ranking-panel .ranking-item {
+  display: grid !important;
+  grid-template-columns: 48px minmax(0, 1fr) minmax(110px, auto) minmax(78px, auto) !important;
+  align-items: center !important;
+  gap: 10px !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  min-height: 38px !important;
+  padding: 7px 10px !important;
+}
+
+.command-ranking-panel .ranking-item > * {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  line-height: 1.1 !important;
+}
+
+.command-ranking-panel .ranking-position {
+  text-align: center !important;
+}
+
+.command-ranking-panel .ranking-ign {
+  text-align: left !important;
+}
+
+.command-ranking-panel .ranking-status {
+  text-align: center !important;
+}
+
+.command-ranking-panel .ranking-hours {
+  text-align: right !important;
+}
+
+.command-ranking-panel .current-user-tag {
+  display: inline-block !important;
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+}
+
+.command-ranking-panel .ranking-heading,
+.command-ranking-panel .ranking-heading > div:first-child,
+.command-ranking-panel .command-ranking-meta {
+  min-width: 0 !important;
+  width: 100% !important;
+  text-align: center !important;
+}
+
+.command-ranking-panel .command-ranking-meta {
+  display: block !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  padding-inline: 10px !important;
+}
+
+@media (max-width: 760px) {
+  .command-ranking-panel .ranking-item {
+    grid-template-columns: 36px minmax(0, 1fr) minmax(72px, auto) !important;
+    gap: 7px !important;
+  }
+
+  .command-ranking-panel .ranking-status {
+    display: none !important;
+  }
+
+  .command-ranking-panel .ranking-hours {
+    text-align: right !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .command-ranking-panel .ranking-item {
+    grid-template-columns: 32px minmax(0, 1fr) minmax(66px, auto) !important;
+    gap: 6px !important;
+    padding-inline: 7px !important;
+  }
+}
