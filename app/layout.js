@@ -7,6 +7,7 @@ import './force-ui.css';
 import './response-list-fix.css';
 import './major-layout-fix.css';
 import './command-center-layout-fix.css';
+import './command-center-final-fix.css';
 import CommandCenterEnhancements from './components/CommandCenterEnhancements';
 
 export const metadata = {
